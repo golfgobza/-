@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ride & Fuel Compare - ระบบเปรียบเทียบค่าเดินทางครบวงจร</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <style>
+    #map { height: 400px; border-radius: 0.75rem; z-index: 1; }
+    .star-rating i { cursor: pointer; transition: color 0.2s; }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="goLanding()">
+        <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md">
+          <i class="fa-solid fa-route text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-lg leading-none text-slate-900">Ride & Fuel Compare</h1>
+          <p class="text-xs text-slate-500 mt-1">ระบบคำนวณและเปรียบเทียบค่าเดินทางครบวงจร</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[11px] bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-full font-bold">
+          <i class="fa-solid fa-circle-dot text-[8px] text-emerald-500 mr-1 animate-pulse"></i>ราคาน้ำมันเรียลไทม์
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
+
+    <!-- PAGE 1: MODE SELECTION -->
+    <div id="page-1" class="space-y-6 block">
+      <div class="text-center max-w-2xl mx-auto my-6 space-y-2">
+        <h2 class="text-2xl font-extrabold text-slate-900">กรุณาเลือกโหมดการคำนวณการเดินทาง</h2>
+        <p class="text-sm text-slate-600">เลือกรูปแบบบริการที่คุณต้องการประเมินราคาและเปรียบเทียบจุดคุ้มทุน</p>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto pt-4">
+        <!-- Mode 1 Card with explicit pointer events and button bindings -->
+        <div id="card-mode-1" class="bg-white p-8 rounded-2xl border-2 border-slate-200 hover:border-blue-500 shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-6 select-none relative z-10">
+          <div class="space-y-4 pointer-events-none">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-taxi"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-slate-900 group-hover:text-blue-600">1. คำนวณการเรียกรถผ่านแอปต่างๆ</h3>
+              <p class="text-xs text-slate-500 mt-2">คำนวณราคาค่าโดยสารจากแอปชั้นนำ กำหนดเส้นทางและเลือกบริการย่อย</p>
+            </div>
+          </div>
+          <div class="flex items-center text-xs font-bold text-blue-600 pointer-events-none">
+            <span>ถัดไป: กำหนดเส้นทาง</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+          </div>
+        </div>
+
+        <!-- Mode 2 Card with explicit pointer events and button bindings -->
+        <div id="card-mode-2" class="bg-white p-8 rounded-2xl border-2 border-slate-200 hover:border-emerald-500 shadow-md transition-all cursor-pointer group flex flex-col justify-between space-y-6 select-none relative z-10">
+          <div class="space-y-4 pointer-events-none">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center text-3xl group-hover:scale-110 transition-transform">
+              <i class="fa-solid fa-gas-pump"></i>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-slate-900 group-hover:text-emerald-600">2. ขับขี่ส่วนบุคคล / จุดคุ้มทุน</h3>
+              <p class="text-xs text-slate-500 mt-2">คำนวณขนาดเครื่องยนต์ เชื้อเพลิงเรียลไทม์ และระยะทางเพื่อวิเคราะห์ความคุ้มค่า</p>
+            </div>
+          </div>
+          <div class="flex items-center text-xs font-bold text-emerald-600 pointer-events-none">
+            <span>เข้าสู่โหมดรถส่วนบุคคล</span> <i class="fa-solid fa-arrow-right ml-2"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 2: ROUTE & MAP SELECTION -->
+    <div id="page-2" class="space-y-6 hidden">
+      <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <button onclick="goLanding()" class="text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-chevron-left"></i> <span>ย้อนกลับไปหน้าเลือกโหมดหลัก</span>
+        </button>
+        <span class="text-xs bg-blue-100 text-blue-800 font-bold px-3 py-1 rounded-full">หน้าที่สอง: กำหนดจุดรับ-จุดส่งและคำนวณเส้นทาง</span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div class="lg:col-span-5 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+          <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-location-dot text-red-500 mr-2"></i>ระบุจุดรับและจุดส่ง</h3>
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block font-bold text-emerald-700 mb-1">จุดรับ (เริ่มต้น):</label>
+              <input type="text" id="origin-input" value="วัดเขาพุทธโคดม" class="w-full border border-slate-300 p-2.5 rounded-lg outline-none">
+            </div>
+            <div>
+              <label class="block font-bold text-red-700 mb-1">จุดส่ง (ปลายทาง):</label>
+              <input type="text" id="dest-input" value="บางปะกง" class="w-full border border-slate-300 p-2.5 rounded-lg outline-none">
+            </div>
+          </div>
+          <button onclick="calculateRouteAndProceed()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl transition shadow cursor-pointer">
+            <i class="fa-solid fa-arrow-right mr-1.5"></i> ยืนยันเส้นทางและไปเลือกแอป (หน้าที่สาม)
+          </button>
+        </div>
+        <div class="lg:col-span-7 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
+          <div id="map"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE 3: APP SELECTION & FARE BREAKDOWN -->
+    <div id="page-3" class="space-y-6 hidden">
+      <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <button onclick="selectMode(1)" class="text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-chevron-left"></i> <span>ย้อนกลับไปแก้ไขเส้นทาง</span>
+        </button>
+        <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">หน้าที่สาม: เลือกแอปพลิเคชันและคำนวณราคา</span>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3">
+        <h3 class="font-bold text-sm text-slate-800"><i class="fa-solid fa-mobile-screen-button text-blue-600 mr-2"></i>เลือกแอปพลิเคชันเรียกรถ</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <button onclick="openAppModal('Grab')" class="p-4 border-2 border-slate-200 hover:border-emerald-500 rounded-xl flex flex-col items-center gap-2 transition group cursor-pointer">
+            <i class="fa-solid fa-shield-halved text-emerald-600 text-3xl"></i>
+            <span class="font-bold text-xs text-slate-800">แกร๊ป (Grab)</span>
+          </button>
+          <button onclick="openAppModal('Bolt')" class="p-4 border-2 border-slate-200 hover:border-amber-500 rounded-xl flex flex-col items-center gap-2 transition group cursor-pointer">
+            <i class="fa-solid fa-bolt text-amber-500 text-3xl"></i>
+            <span class="font-bold text-xs text-slate-800">โบว์ (Bolt)</span>
+          </button>
+          <button onclick="openAppModal('LINE MAN')" class="p-4 border-2 border-slate-200 hover:border-green-500 rounded-xl flex flex-col items-center gap-2 transition group cursor-pointer">
+            <i class="fa-solid fa-comment-sms text-green-500 text-3xl"></i>
+            <span class="font-bold text-xs text-slate-800">ไลน์แมน (LINE MAN)</span>
+          </button>
+          <button onclick="openAppModal('inDrive')" class="p-4 border-2 border-slate-200 hover:border-indigo-500 rounded-xl flex flex-col items-center gap-2 transition group cursor-pointer">
+            <i class="fa-solid fa-hand-holding-dollar text-indigo-500 text-3xl"></i>
+            <span class="font-bold text-xs text-slate-800">อินไดร์ฟ (inDrive)</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="step-display-box" class="hidden bg-blue-50 border border-blue-200 p-4 rounded-xl text-xs font-bold text-blue-900">
+        ลำดับขั้นตอนที่คุณเลือก: <span id="step-text-path" class="font-normal text-slate-700">-</span>
+      </div>
+
+      <div id="result-box" class="hidden bg-slate-900 text-white p-6 rounded-2xl shadow-lg space-y-5">
+        <h3 class="text-xs font-bold text-blue-300 uppercase tracking-wide border-b border-slate-800 pb-3">
+          <i class="fa-solid fa-chart-line text-emerald-400 mr-2"></i>สรุปผลการคำนวณเส้นทางและราคา
+        </h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+          <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <span class="text-[11px] text-slate-400 block mb-1">ระยะทาง/กม.</span>
+            <span id="res-dist" class="text-xl font-extrabold text-blue-400">15.0 กม.</span>
+          </div>
+          <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <span class="text-[11px] text-slate-400 block mb-1">ค่าผ่านทางรวม</span>
+            <span id="res-toll" class="text-xl font-extrabold text-amber-400">55 บาท</span>
+          </div>
+          <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <span class="text-[11px] text-slate-400 block mb-1">ราคาประมาณ/บาท</span>
+            <span id="res-price" class="text-xl font-extrabold text-emerald-400">฿243</span>
+          </div>
+          <div class="bg-slate-800 p-4 rounded-xl border border-slate-700">
+            <span class="text-[11px] text-slate-400 block mb-1">ระยะเวลาเดินทาง</span>
+            <span id="res-time" class="text-xl font-extrabold text-white">0 ชม. 22 นาที</span>
+          </div>
+        </div>
+        <div class="pt-3 border-t border-slate-800 text-center space-y-3">
+          <p class="text-xs text-slate-300">หากคุณต้องการเปรียบเทียบราคา</p>
+          <button onclick="openCompareModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg transition cursor-pointer">
+            <i class="fa-solid fa-check mr-2"></i> ตกลง (เปรียบเทียบราคาทุกแอป)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAGE MODE 2: PERSONAL VEHICLE & BREAK EVEN -->
+    <div id="page-mode2" class="space-y-6 hidden">
+      <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <button onclick="goLanding()" class="text-xs font-bold text-slate-600 hover:text-blue-600 flex items-center gap-1.5 cursor-pointer">
+          <i class="fa-solid fa-chevron-left"></i> <span>ย้อนกลับไปหน้าเลือกโหมดหลัก</span>
+        </button>
+        <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full">โหมดที่ 2: ขับขี่ส่วนบุคคล / จุดคุ้มทุน (ราคาน้ำมันเรียลไทม์)</span>
+      </div>
+
+      <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5 max-w-3xl mx-auto">
+        <h3 class="font-bold text-base text-slate-900"><i class="fa-solid fa-sliders text-emerald-600 mr-2"></i>ตั้งค่าขนาดเครื่องยนต์ เชื้อเพลิงเรียลไทม์ และระยะทาง</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ขนาดเครื่องยนต์ / ประเภทรถ:</label>
+            <select id="m2-vehicle" onchange="calcMode2()" class="w-full border border-slate-300 p-2.5 rounded-lg cursor-pointer">
+              <option value="18">Eco Car 1.2L (18 กม./ลิตร)</option>
+              <option value="13">Sedan 1.8L-2.4L (13 กม./ลิตร)</option>
+              <option value="10">SUV / กระบะ 2.8L (10 กม./ลิตร)</option>
+              <option value="6.6">รถยนต์ไฟฟ้า EV (6.6 กม./kWh)</option>
+              <option value="35">รถมอเตอร์ไซค์ 125cc-150cc (35 กม./ลิตร)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium text-slate-700 mb-1">ประเภทเชื้อเพลิง (อัปเดตอัตโนมัติ):</label>
+            <select id="m2-fuel" onchange="calcMode2()" class="w-full border border-slate-300 p-2.5 rounded-lg font-bold text-blue-600 cursor-pointer">
+              <!-- Populated automatically -->
+            </select>
+          </div>
+        </div>
+        <div class="text-xs">
+          <label class="block font-medium text-slate-700 mb-1">ระยะทางรวม (กม.):</label>
+          <input type="number" id="m2-dist" value="15" oninput="calcMode2()" class="w-full border border-slate-300 p-2.5 rounded-lg font-bold text-emerald-700">
+        </div>
+        <div class="bg-emerald-950 text-white p-5 rounded-xl space-y-3">
+          <h4 class="text-xs font-bold text-emerald-300 uppercase">สรุปต้นทุนการขับขี่ส่วนบุคคล</h4>
+          <div class="grid grid-cols-3 gap-3 text-center text-xs">
+            <div class="bg-emerald-900/60 p-3 rounded-lg border border-emerald-800">
+              <span class="text-[10px] text-emerald-300 block">ปริมาณที่ใช้</span>
+              <span id="m2-used" class="text-lg font-extrabold text-emerald-400">0.83</span>
+              <span class="text-[10px] text-slate-400 block">ลิตร/kWh</span>
+            </div>
+            <div class="bg-emerald-900/60 p-3 rounded-lg border border-emerald-800">
+              <span class="text-[10px] text-emerald-300 block">เฉลี่ยต่อ กม.</span>
+              <span id="m2-perkm" class="text-lg font-extrabold text-amber-300">2.10</span>
+              <span class="text-[10px] text-slate-400 block">บาท/กม.</span>
+            </div>
+            <div class="bg-emerald-900/60 p-3 rounded-lg border border-emerald-800">
+              <span class="text-[10px] text-emerald-300 block">ต้นทุนรวม</span>
+              <span id="m2-total" class="text-lg font-extrabold text-white">฿31</span>
+              <span class="text-[10px] text-slate-400 block">บาท</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: APP VEHICLE & SUB-MODES -->
+  <div id="modal-app" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white max-w-md w-full rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 id="modal-app-title" class="font-bold text-base text-slate-900">เลือกประเภทรถ</h3>
+        <button onclick="closeAppModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-xs font-bold text-slate-700 block">1. เลือกหมวดพาหนะ:</label>
+        <div class="grid grid-cols-2 gap-3">
+          <button onclick="selectCategory('bike')" class="border-2 border-slate-200 p-3 rounded-xl flex flex-col items-center gap-1 font-bold text-xs hover:border-blue-500 cursor-pointer">
+            <i class="fa-solid fa-motorcycle text-2xl text-blue-600"></i> รถมอเตอร์ไซค์
+          </button>
+          <button onclick="selectCategory('car')" class="border-2 border-slate-200 p-3 rounded-xl flex flex-col items-center gap-1 font-bold text-xs hover:border-blue-500 cursor-pointer">
+            <i class="fa-solid fa-car text-2xl text-emerald-600"></i> รถยนต์
+          </button>
+        </div>
+      </div>
+      <div id="submode-box" class="hidden space-y-2 pt-2 border-t border-slate-100 text-xs">
+        <label class="font-bold text-slate-700 block">2. เลือกโหมดบริการย่อย:</label>
+        <div id="submode-list" class="space-y-2 max-h-48 overflow-y-auto"></div>
+      </div>
+      <button id="btn-confirm-app" onclick="confirmAppSelection()" disabled class="w-full bg-slate-300 text-slate-500 font-bold text-xs py-3 rounded-xl cursor-not-allowed">ยืนยันเลือกบริการ</button>
+    </div>
+  </div>
+
+  <!-- MODAL: TOLL -->
+  <div id="modal-toll" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white max-w-lg w-full rounded-2xl shadow-2xl p-6 space-y-4">
+      <div class="flex items-start gap-3 text-amber-600">
+        <i class="fa-solid fa-triangle-exclamation text-3xl shrink-0"></i>
+        <div>
+          <h3 class="font-extrabold text-base text-slate-900">แจ้งเตือน: เส้นทางนี้มีทางพิเศษ / ค่าผ่านทาง</h3>
+          <p class="text-xs text-slate-600 mt-1">ระบบตรวจพบเส้นทางผ่านทางพิเศษ ทางด่วนบูรพาวิถี / ด่านเก็บเงิน</p>
+        </div>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 p-3.5 rounded-xl text-xs space-y-1 text-amber-900">
+        <p><b>จำนวนด่านทั้งหมด:</b> 2 ด่าน (ด่านบางนา + ด่านชลบุรี)</p>
+        <p><b>ชื่อทางพิเศษ:</b> ทางพิเศษบูรพาวิถี</p>
+        <p><b>ค่าผ่านทางรวม:</b> <span class="font-bold text-red-600 text-sm">฿55 บาท</span></p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-2 text-xs">
+        <button onclick="applyToll(true)" class="bg-blue-600 text-white font-bold py-2.5 rounded-xl cursor-pointer">ตกลง (ใช้ทางด่วน)</button>
+        <button onclick="applyToll(false)" class="bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl cursor-pointer">ทางปกติ (ไม่มีค่าผ่านทาง)</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: COMPARE -->
+  <div id="modal-compare" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div class="bg-white max-w-2xl w-full rounded-2xl shadow-2xl p-6 space-y-4 max-h-[90vh] overflow-y-auto text-xs">
+      <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+        <h3 class="font-bold text-sm text-slate-900"><i class="fa-solid fa-scale-balanced text-blue-600 mr-2"></i>ผลการเปรียบเทียบราคา</h3>
+        <button onclick="closeCompareModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="bg-amber-50 border-l-4 border-amber-400 p-3 rounded-r-xl text-amber-900 space-y-1">
+        <p class="font-bold">ระบบจะคำนวณเปรียบเทียบราคาทุกแอปให้คุณ</p>
+        <p>ราคาการเปรียบเทียบอาจไม่ตรงกับแอปพลิเคชันจริง มีการคลาดเคลื่อนแต่ระบบจะคำนวนให้ใกล้เคียงที่สุด ทั้งนี้ขึ้นอยู่กับโหมดของแต่ละแอปไม่ตรงกัน และเวลาในการเรียกใช้บริการ โปรดใช้วิจารณญาณ หากมีประการใดผิดพลาดทางเว็บไซต์ต้องขออภัย</p>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-600 uppercase">
+              <th class="p-2.5 rounded-l">ผู้ให้บริการ</th>
+              <th class="p-2.5">โหมดบริการ</th>
+              <th class="p-2.5">ระยะทาง</th>
+              <th class="p-2.5 text-right rounded-r">ราคาประเมิน</th>
+            </tr>
+          </thead>
+          <tbody id="compare-table-body" class="divide-y divide-slate-100"></tbody>
+        </table>
+      </div>
+      <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+        <h4 class="font-bold text-slate-800">ให้คะแนนเว็บไซต์ & แสดงความคิดเห็น</h4>
+        <div class="flex items-center gap-1 text-amber-400 text-lg">
+          <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+        </div>
+        <textarea rows="2" placeholder="ยินดีรับฟังทุกความคิดเห็น ติชม..." class="w-full border border-slate-300 p-2 rounded-lg"></textarea>
+        <button onclick="showCustomAlert('ขอบคุณสำหรับความคิดเห็นครับ!')" class="bg-blue-600 text-white font-bold px-4 py-1.5 rounded-lg cursor-pointer">ส่งความคิดเห็น</button>
+      </div>
+      <div class="flex justify-end">
+        <button onclick="closeCompareModal()" class="bg-slate-800 text-white font-bold px-5 py-2 rounded-xl cursor-pointer">ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentApp = '', currentCategory = '', currentSubmode = null, currentDist = 15.0, useToll = true;
+    let map, polyline, markers = [];
+
+    const realtimeFuelPrices = {
+      "gas95": { name: "แก๊สโซฮอล์ 95", price: 41.44 },
+      "gas91": { name: "แก๊สโซฮอล์ 91", price: 41.07 },
+      "e20": { name: "แก๊สโซฮอล์ E20", price: 35.69 },
+      "diesel": { name: "ดีเซล B7", price: 42.94 },
+      "ev": { name: "ไฟฟ้า EV (PTT Station)", price: 7.50 }
+    };
+
+    const appDb = {
+      Grab: {
+        bike: [{name:'GrabBike (Win)', base:28, rate:6.5}, {name:'GrabExpress', base:35, rate:8.0}],
+        car: [{name:'GrabCar Standard', base:35, rate:12.5}, {name:'GrabCar Plus', base:50, rate:16.0}, {name:'GrabSUV', base:60, rate:18.0}]
+      },
+      Bolt: {
+        bike: [{name:'Bolt Bike', base:20, rate:5.5}],
+        car: [{name:'Bolt Economy', base:30, rate:10.5}, {name:'Bolt Standard', base:35, rate:11.5}]
+      },
+      'LINE MAN': {
+        bike: [{name:'LINE MAN Bike', base:25, rate:6.0}],
+        car: [{name:'LINE MAN Eco', base:35, rate:11.8}, {name:'LINE MAN Car', base:45, rate:13.5}]
+      },
+      inDrive: {
+        bike: [{name:'inDrive Moto', base:20, rate:5.0}],
+        car: [{name:'inDrive City', base:32, rate:10.0}, {name:'inDrive Comfort', base:40, rate:12.5}]
+      }
+    };
+
+    const locationDB = {
+      "วัดเขาพุทธโคดม": [13.1648, 100.9312], "ศรีราชา": [13.1737, 100.9312],
+      "บางปะกง": [13.5431, 100.9934], "กรุงเทพ": [13.7563, 100.5018]
+    };
+
+    function showCustomAlert(msg) {
+      const div = document.createElement('div');
+      div.className = 'fixed top-5 right-5 z-[100] bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl text-xs font-bold transition-all';
+      div.innerText = msg;
+      document.body.appendChild(div);
+      setTimeout(() => { div.remove(); }, 3000);
+    }
+
+    function initRealtimeFuelDropdown() {
+      const selectEl = document.getElementById('m2-fuel');
+      if(!selectEl) return;
+      selectEl.innerHTML = '';
+      Object.keys(realtimeFuelPrices).forEach(key => {
+        const item = realtimeFuelPrices[key];
+        selectEl.innerHTML += `<option value="${item.price}">${item.name} (${item.price.toFixed(2)} ฿)</option>`;
+      });
+    }
+
+    function switchPage(pageId) {
+      ['page-1', 'page-2', 'page-3', 'page-mode2'].forEach(id => {
+        const el = document.getElementById(id);
+        if(!el) return;
+        if(id === pageId) {
+          el.classList.remove('hidden');
+          el.classList.add('block');
+        } else {
+          el.classList.remove('block');
+          el.classList.add('hidden');
+        }
+      });
+    }
+
+    function goLanding() {
+      switchPage('page-1');
+    }
+
+    function selectMode(m) {
+      if(m === 1) {
+        switchPage('page-2');
+        setTimeout(() => {
+          if(!map) {
+            map = L.map('map').setView([13.35, 100.95], 9);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+          } else {
+            map.invalidateSize();
+          }
+          calculateRouteAndProceed(true);
+        }, 150);
+      } else {
+        switchPage('page-mode2');
+        initRealtimeFuelDropdown();
+        calcMode2();
+      }
+    }
+
+    function calcDist(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dL = (lat2-lat1)*Math.PI/180, dLon = (lon2-lon1)*Math.PI/180;
+      const a = Math.sin(dL/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+      return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)));
+    }
+
+    function calculateRouteAndProceed(isInit = false) {
+      if (!map) return;
+      markers.forEach(m => map.removeLayer(m)); markers = [];
+      if(polyline) map.removeLayer(polyline);
+      const originVal = document.getElementById('origin-input').value.trim();
+      const destVal = document.getElementById('dest-input').value.trim();
+      const p1 = locationDB[originVal] || [13.1648, 100.9312];
+      const p2 = locationDB[destVal] || [13.5431, 100.9934];
+      currentDist = Math.max(3.0, calcDist(p1[0], p1[1], p2[0], p2[1]) * 1.25);
+      markers.push(L.marker(p1).addTo(map), L.marker(p2).addTo(map));
+      polyline = L.polyline([p1, p2], {color:'#2563eb', weight:5}).addTo(map);
+      map.fitBounds(polyline.getBounds(), {padding:[40,40]});
+
+      if(!isInit) {
+        if(currentDist > 10.0) {
+          document.getElementById('modal-toll').classList.remove('hidden');
+        } else {
+          useToll = false;
+          proceedToPage3();
+        }
+      }
+    }
+
+    function applyToll(flag) {
+      useToll = flag;
+      document.getElementById('modal-toll').classList.add('hidden');
+      proceedToPage3();
+    }
+
+    function proceedToPage3() {
+      switchPage('page-3');
+    }
+
+    function openAppModal(name) {
+      currentApp = name;
+      document.getElementById('modal-app-title').innerText = `เลือกประเภทรถ - ${name}`;
+      document.getElementById('submode-box').classList.add('hidden');
+      document.getElementById('modal-app').classList.remove('hidden');
+    }
+
+    function closeAppModal() { document.getElementById('modal-app').classList.add('hidden'); }
+
+    function selectCategory(cat) {
+      currentCategory = cat;
+      const list = appDb[currentApp]?.[cat] || [];
+      const box = document.getElementById('submode-list');
+      box.innerHTML = '';
+      list.forEach((item, idx) => {
+        box.innerHTML += `<label class="flex items-center justify-between p-2.5 border rounded-lg cursor-pointer hover:bg-slate-50"><div class="flex items-center gap-2"><input type="radio" name="sub" onchange="pickSub(${idx})"><span>${item.name}</span></div><span>฿${item.base}+฿${item.rate}/กม.</span></label>`;
+      });
+      document.getElementById('submode-box').classList.remove('hidden');
+    }
+
+    function pickSub(idx) {
+      currentSubmode = appDb[currentApp][currentCategory][idx];
+      const btn = document.getElementById('btn-confirm-app');
+      btn.disabled = false;
+      btn.className = 'w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 rounded-xl cursor-pointer transition';
+    }
+
+    function confirmAppSelection() {
+      closeAppModal();
+      const path = `แอป: ${currentApp} ➔ หมวด: ${currentCategory==='bike'?'มอเตอร์ไซค์':'รถยนต์'} ➔ โหมด: ${currentSubmode.name}`;
+      document.getElementById('step-text-path').innerText = path;
+      document.getElementById('step-display-box').classList.remove('hidden');
+
+      const toll = useToll ? 55 : 0;
+      const price = currentSubmode ? (currentSubmode.base + (currentDist * currentSubmode.rate) + toll) : 243;
+      document.getElementById('res-dist').innerText = `${currentDist.toFixed(1)} กม.`;
+      document.getElementById('res-toll').innerText = `${toll} บาท`;
+      document.getElementById('res-price').innerText = `฿${price.toFixed(0)}`;
+      document.getElementById('result-box').classList.remove('hidden');
+    }
+
+    function openCompareModal() {
+      const tb = document.getElementById('compare-table-body');
+      tb.innerHTML = '';
+      const toll = useToll ? 55 : 0;
+      Object.keys(appDb).forEach(b => {
+        ['bike','car'].forEach(c => {
+          appDb[b][c].forEach(m => {
+            const p = m.base + (currentDist * m.rate) + toll;
+            tb.innerHTML += `<tr class="hover:bg-slate-50"><td class="p-2.5 font-bold">${b}</td><td class="p-2.5">${m.name}</td><td class="p-2.5">${currentDist.toFixed(1)} กม.</td><td class="p-2.5 text-right font-bold text-blue-600">฿${p.toFixed(0)}</td></tr>`;
+          });
+        });
+      });
+      document.getElementById('modal-compare').classList.remove('hidden');
+    }
+
+    function closeCompareModal() { document.getElementById('modal-compare').classList.add('hidden'); }
+
+    function calcMode2() {
+      const km = parseFloat(document.getElementById('m2-vehicle').value) || 18;
+      const pr = parseFloat(document.getElementById('m2-fuel').value) || 37.80;
+      const ds = parseFloat(document.getElementById('m2-dist').value) || 15;
+      const used = ds / km;
+      document.getElementById('m2-used').innerText = used.toFixed(2);
+      document.getElementById('m2-perkm').innerText = (pr / km).toFixed(2);
+      document.getElementById('m2-total').innerText = `฿${(used * pr).toFixed(0)}`;
+    }
+
+    // Attach robust event listeners on window load to ensure click functionality
+    window.onload = function() {
+      const card1 = document.getElementById('card-mode-1');
+      const card2 = document.getElementById('card-mode-2');
+
+      if(card1) {
+        card1.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectMode(1);
+        });
+      }
+
+      if(card2) {
+        card2.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectMode(2);
+        });
+      }
+    };
+  </script>
+</body>
+</html>
