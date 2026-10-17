@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เปรียบเทียบราคาเรียกรถ — Ride & Fuel Compare</title>
+    <title>เปรียบเทียบราคาเรียกรถ — มีแผนที่</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -21,56 +21,83 @@
         }
         body {
             background-color: #f8f9fa;
-            padding: 20px;
-            max-width: 700px;
+            padding: 15px;
+            max-width: 750px;
             margin: 0 auto;
         }
         h1 {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             color: #333;
+            font-size: 22px;
+        }
+        .map-container {
+            height: 380px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.15);
+            margin-bottom: 15px;
+            position: relative;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
         }
         .input-group {
             background: white;
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 15px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         label {
             display: block;
-            margin-bottom: 6px;
+            margin-bottom: 5px;
             font-weight: 600;
             color: #444;
+            font-size: 14px;
+        }
+        .input-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         input {
-            width: 100%;
-            padding: 12px;
+            flex: 1;
+            padding: 10px 12px;
             border: 1px solid #ddd;
             border-radius: 8px;
-            font-size: 16px;
+            font-size: 15px;
         }
-        button {
+        .loc-btn {
+            padding: 10px 12px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        button.calc-btn {
             width: 100%;
-            padding: 14px;
+            padding: 13px;
             background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
             border: none;
             border-radius: 10px;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 10px;
+            margin-top: 5px;
         }
-        button:hover {
+        button.calc-btn:hover {
             opacity: 0.95;
         }
         .toll-box {
             background: #fff3cd;
             border: 1px solid #ffc107;
             border-radius: 10px;
-            padding: 18px;
-            margin: 20px 0;
+            padding: 15px;
+            margin: 15px 0;
             display: none;
         }
         .toll-option {
@@ -83,21 +110,15 @@
             padding: 10px;
             border: none;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 14px;
             cursor: pointer;
         }
-        .btn-yes {
-            background: #28a745;
-            color: white;
-        }
-        .btn-no {
-            background: #dc3545;
-            color: white;
-        }
+        .btn-yes { background: #28a745; color: white; }
+        .btn-no { background: #dc3545; color: white; }
         .result-card {
             background: white;
             border-radius: 12px;
-            padding: 18px;
+            padding: 15px;
             margin-top: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             display: none;
@@ -105,17 +126,25 @@
         .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
+            padding: 9px 0;
             border-bottom: 1px solid #eee;
         }
-        .price-row:last-child {
-            border-bottom: none;
+        .price-row:last-child { border-bottom: none; }
+        .price-label { font-weight: 500; }
+        .price-value { font-weight: 700; }
+        .error-box {
+            background: #ffebee;
+            border: 1px solid #ef5350;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+            color: #c62828;
+            display: none;
         }
-        .price-label {
-            font-weight: 500;
-        }
-        .price-value {
-            font-weight: 700;
+        .coords-note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
         }
     </style>
 </head>
@@ -123,25 +152,43 @@
 
 <h1>🚗 เปรียบเทียบราคาเรียกรถ</h1>
 
-<div class="input-group">
-    <label for="origin">📍 จุดรับ</label>
-    <input type="text" id="origin" placeholder="กรอกที่อยู่จุดรับ...">
+<!-- แผนที่ -->
+<div class="map-container">
+    <div id="map"></div>
 </div>
 
+<!-- กล่องข้อความผิดพลาด -->
+<div class="error-box" id="errorBox"></div>
+
+<!-- ช่องกรอกจุดรับ -->
 <div class="input-group">
-    <label for="destination">📍 จุดส่ง</label>
-    <input type="text" id="destination" placeholder="กรอกที่อยู่จุดส่ง...">
+    <label for="origin">📍 จุดรับ (คลิกแผนที่ หรือ กรอกที่อยู่)</label>
+    <div class="input-row">
+        <input type="text" id="origin" placeholder="พิมพ์ที่อยู่ หรือ คลิกเลือกบนแผนที่">
+        <button class="loc-btn" onclick="useCurrentLocation('origin')" title="ใช้ตำแหน่งปัจจุบัน">📍</button>
+    </div>
+    <div class="coords-note" id="originCoords"></div>
 </div>
 
-<button onclick="calculateRoute()">🔍 คำนวณเส้นทาง & ราคา</button>
+<!-- ช่องกรอกจุดส่ง -->
+<div class="input-group">
+    <label for="destination">📍 จุดส่ง (คลิกแผนที่ หรือ กรอกที่อยู่)</label>
+    <div class="input-row">
+        <input type="text" id="destination" placeholder="พิมพ์ที่อยู่ หรือ คลิกเลือกบนแผนที่">
+        <button class="loc-btn" onclick="useCurrentLocation('destination')" title="ใช้ตำแหน่งปัจจุบัน">📍</button>
+    </div>
+    <div class="coords-note" id="destCoords"></div>
+</div>
 
-<!-- กล่องแจ้งค่าผ่านทาง -->
+<button class="calc-btn" onclick="calculateRoute()">🔍 คำนวณเส้นทาง & ราคา</button>
+
+<!-- กล่องถามค่าผ่านทาง -->
 <div class="toll-box" id="tollBox">
     <h3>⚠️ เส้นทางนี้มีค่าผ่านทาง</h3>
     <p id="tollDetails"></p>
     <div class="toll-option">
-        <button class="toll-btn btn-yes" onclick="confirmToll(true)">✅ ใช่ ขึ้นทางด่วน เพิ่มค่าผ่านทาง</button>
-        <button class="toll-btn btn-no" onclick="confirmToll(false)">❌ ไม่เอา ใช้ถนนธรรมดา</button>
+        <button class="toll-btn btn-yes" onclick="confirmToll(true)">✅ ใช่ ขึ้นทางด่วน</button>
+        <button class="toll-btn btn-no" onclick="confirmToll(false)">❌ ไม่เอา ทางธรรมดา</button>
     </div>
 </div>
 
@@ -161,172 +208,317 @@
         <span class="price-value" id="tollCostText">-</span>
     </div>
     <div class="price-row">
-        <span class="price-label">ค่าโดยสาร Grab</span>
+        <span class="price-label">Grab</span>
         <span class="price-value" id="grabPrice">-</span>
     </div>
     <div class="price-row">
-        <span class="price-label">ค่าโดยสาร Bolt</span>
+        <span class="price-label">Bolt</span>
         <span class="price-value" id="boltPrice">-</span>
     </div>
     <div class="price-row">
-        <span class="price-label">ค่าโดยสาร InDrive</span>
+        <span class="price-label">InDrive</span>
         <span class="price-value" id="indrivePrice">-</span>
     </div>
     <div class="price-row">
-        <span class="price-label">ค่าแท็กซี่มิเตอร์</span>
+        <span class="price-label">แท็กซี่มิเตอร์</span>
         <span class="price-value" id="taxiPrice">-</span>
     </div>
 </div>
 
 <script>
-// 🔑 ใส่ API Key ตรงนี้ (ใส่ให้แล้วเรียบร้อย)
+// 🔑 API Key
 const API_KEY = "AIzaSyAWxrmqcWiMppxhmHYWd1yNqMMi6BzfHMg";
 
-// ตัวแปรเก็บข้อมูลเส้นทาง
+let map;
+let originMarker = null;
+let destMarker = null;
+let directionsRenderer = null;
+let pickMode = null; // 'origin' หรือ 'destination'
+let originCoords = null;
+let destCoords = null;
 let currentRouteData = null;
 let tollAmount = 0;
 
-// 1. คำนวณเส้นทาง
-async function calculateRoute() {
-    const origin = document.getElementById('origin').value.trim();
-    const destination = document.getElementById('destination').value.trim();
-    
-    if (!origin || !destination) {
-        alert('กรุณากรอกจุดรับและจุดส่งให้ครบถ้วน');
-        return;
-    }
+// แสดง/ซ่อน ข้อความผิดพลาด
+function showError(msg) {
+    const box = document.getElementById('errorBox');
+    box.innerHTML = msg;
+    box.style.display = 'block';
+}
+function hideError() {
+    document.getElementById('errorBox').style.display = 'none';
+}
 
-    // เรียก Google Routes API
-    const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
-    
-    const response = await fetch(url, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-Goog-Api-Key": API_KEY,
-            "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.travelAdvisory.tollInfo"
-        },
-        body: JSON.stringify({
-            origin: { address: origin },
-            destination: { address: destination },
-            travelMode: "DRIVE",
-            extraComputations: ["TOLLS"],
-            routeModifiers: {
-                vehicleInfo: { type: "CAR" },
-                tollPasses: ["NOTOLLPASS"]
-            }
-        })
+// โหลดแผนที่
+function initMap() {
+    // ตั้งค่ากลางแผนที่ที่กรุงเทพฯ
+    map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: 13.7563, lng: 100.5018 },
+        zoom: 11,
+        mapTypeControl: true,
+        streetViewControl: false
     });
 
-    const data = await response.json();
-    
-    if (!data.routes || data.routes.length === 0) {
-        alert("ไม่พบเส้นทาง กรุณาตรวจสอบที่อยู่อีกครั้ง");
+    // ตัววาดเส้นทาง
+    directionsRenderer = new google.maps.DirectionsRenderer({
+        map: map,
+        suppressMarkers: false
+    });
+
+    // คลิกแผนที่เพื่อเลือกจุด
+    map.addListener('click', function(e) {
+        if (!pickMode) return;
+        placeMarker(e.latLng, pickMode);
+        pickMode = null;
+    });
+
+    // เมื่อพิมพ์ในช่องจุดรับ → เปิดโหมดเลือกจุดรับ
+    document.getElementById('origin').addEventListener('focus', function() {
+        pickMode = 'origin';
+    });
+    document.getElementById('destination').addEventListener('focus', function() {
+        pickMode = 'destination';
+    });
+}
+
+// วางหมุดบนแผนที่
+function placeMarker(latLng, type) {
+    if (type === 'origin') {
+        if (originMarker) originMarker.setMap(null);
+        originMarker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: 'จุดรับ',
+            icon: { url: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' }
+        });
+        originCoords = { lat: latLng.lat(), lng: latLng.lng() };
+        // แปลงพิกัดเป็นที่อยู่
+        reverseGeocode(latLng, 'origin');
+        document.getElementById('originCoords').textContent = `พิกัด: ${originCoords.lat.toFixed(6)}, ${originCoords.lng.toFixed(6)}`;
+    } else {
+        if (destMarker) destMarker.setMap(null);
+        destMarker = new google.maps.Marker({
+            position: latLng,
+            map: map,
+            title: 'จุดส่ง',
+            icon: { url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }
+        });
+        destCoords = { lat: latLng.lat(), lng: latLng.lng() };
+        reverseGeocode(latLng, 'destination');
+        document.getElementById('destCoords').textContent = `พิกัด: ${destCoords.lat.toFixed(6)}, ${destCoords.lng.toFixed(6)}`;
+    }
+}
+
+// ใช้ตำแหน่งปัจจุบัน
+function useCurrentLocation(type) {
+    if (!navigator.geolocation) {
+        alert('เบราว์เซอร์ไม่รองรับตำแหน่ง');
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        function(pos) {
+            const latLng = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude);
+            placeMarker(latLng, type);
+            map.panTo(latLng);
+            map.setZoom(15);
+        },
+        function(err) {
+            alert('หาตำแหน่งไม่ได้: ' + err.message);
+        }
+    );
+}
+
+// แปลงพิกัด → ที่อยู่
+function reverseGeocode(latLng, type) {
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode({ location: latLng, language: 'th' }, function(results, status) {
+        if (status === 'OK' && results[0]) {
+            document.getElementById(type).value = results[0].formatted_address;
+        }
+    });
+}
+
+// แปลงที่อยู่ → พิกัด
+async function geocodeAddress(address) {
+    const geocoder = new google.maps.Geocoder();
+    return new Promise(function(resolve, reject) {
+        geocoder.geocode(
+            { address: address + ', ประเทศไทย', language: 'th' },
+            function(results, status) {
+                if (status === 'OK' && results[0]) {
+                    resolve(results[0].geometry.location);
+                } else {
+                    reject(status);
+                }
+            }
+        );
+    });
+}
+
+// คำนวณเส้นทาง
+async function calculateRoute() {
+    hideError();
+    directionsRenderer.setDirections({}); // ล้างเส้นทางเก่า
+
+    let originText = document.getElementById('origin').value.trim();
+    let destText = document.getElementById('destination').value.trim();
+
+    if (!originText || !destText) {
+        showError('⚠️ กรุณาระบุจุดรับและจุดส่ง');
         return;
     }
 
-    const route = data.routes[0];
-    const distanceKm = (route.distanceMeters / 1000).toFixed(1);
-    const durationMin = Math.ceil(parseInt(route.duration.replace("s", "")) / 60);
-    
-    // เก็บข้อมูลไว้ใช้ต่อ
-    currentRouteData = { distanceKm, durationMin, route };
+    try {
+        // แปลงที่อยู่เป็นพิกัด (ถ้ายังไม่มี)
+        if (!originCoords) {
+            const oLatLng = await geocodeAddress(originText);
+            placeMarker(oLatLng, 'origin');
+        }
+        if (!destCoords) {
+            const dLatLng = await geocodeAddress(destText);
+            placeMarker(dLatLng, 'destination');
+        }
 
-    // ตรวจสอบว่ามีค่าผ่านทางไหม
-    if (route.travelAdvisory?.tollInfo && route.travelAdvisory.tollInfo.tollSections?.length > 0) {
-        const tollSections = route.travelAdvisory.tollInfo.tollSections.length;
-        tollAmount = estimateTollCost(tollSections);
-        
-        // แสดงกล่องถามลูกค้า
-        document.getElementById('tollDetails').innerHTML = 
-            `จำนวนด่าน: <strong>${tollSections} ด่าน</strong><br>` +
-            `ค่าผ่านทางโดยประมาณ: <strong>${tollAmount} บาท</strong> (รถ 4 ล้อ)`;
-        
-        document.getElementById('tollBox').style.display = "block";
-        document.getElementById('resultCard').style.display = "none";
-    } else {
-        // ไม่มีค่าผ่านทาง แสดงผลทันที
-        tollAmount = 0;
-        displayResults();
-    }
-}
-
-// 2. ประเมินค่าผ่านทาง (อ้างอิงอัตราค่าทางด่วนไทย)
-function estimateTollCost(sections) {
-    // อัตราค่าประมาณ: ทางด่วนกรุงเทพฯ และปริมณฑล
-    const baseRate = 35;  // ค่าเริ่มต้น
-    const perGate = 22;   // เฉลี่ยต่อด่าน
-    return baseRate + ((sections - 1) * perGate);
-}
-
-// 3. ลูกค้าเลือกใช้/ไม่ใช้ทางด่วน
-async function confirmToll(wantToll) {
-    document.getElementById('tollBox').style.display = "none";
-    
-    if (!wantToll) {
-        // เรียกเส้นทางใหม่โดยหลีกเลี่ยงค่าผ่านทาง
-        const origin = document.getElementById('origin').value.trim();
-        const destination = document.getElementById('destination').value.trim();
-        
+        // เรียก Routes API เพื่อตรวจสอบค่าผ่านทาง
         const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
         const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-Goog-Api-Key": API_KEY,
-                "X-Goog-FieldMask": "routes.duration,routes.distanceMeters"
+                "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.travelAdvisory.tollInfo"
             },
             body: JSON.stringify({
-                origin: { address: origin },
-                destination: { address: destination },
+                origin: { location: { latLng: originCoords } },
+                destination: { location: { latLng: destCoords } },
                 travelMode: "DRIVE",
-                routeModifiers: { avoidTolls: true }
+                extraComputations: ["TOLLS"],
+                languageCode: "th-TH",
+                routeModifiers: {
+                    vehicleInfo: { type: "CAR" },
+                    tollPasses: ["NOTOLLPASS"]
+                }
             })
         });
 
         const data = await response.json();
+        if (!response.ok) {
+            if (data.error?.status === "PERMISSION_DENIED") {
+                showError('❌ ยังไม่ได้เปิดใช้ Routes API ใน Google Cloud Console หรือ API Key ไม่ถูกต้อง');
+            } else if (data.error?.status === "NOT_FOUND") {
+                showError('❌ ไม่พบเส้นทาง กรุณาตรวจสอบที่อยู่อีกครั้ง');
+            } else {
+                showError('❌ ผิดพลาด: ' + (data.error?.message || 'ไม่ทราบสาเหตุ'));
+            }
+            return;
+        }
+        if (!data.routes || data.routes.length === 0) {
+            showError('❌ ไม่พบเส้นทาง');
+            return;
+        }
+
         const route = data.routes[0];
-        currentRouteData.distanceKm = (route.distanceMeters / 1000).toFixed(1);
-        currentRouteData.durationMin = Math.ceil(parseInt(route.duration.replace("s", "")) / 60);
-        tollAmount = 0;
+        const distanceKm = (route.distanceMeters / 1000).toFixed(1);
+        const durationMin = Math.ceil(parseInt(route.duration.replace("s", "")) / 60);
+        
+        currentRouteData = { distanceKm, durationMin, useToll: true };
+
+        // วาดเส้นทางบนแผนที่ด้วย Directions API
+        drawDirections(false);
+
+        // ตรวจสอบค่าผ่านทาง
+        if (route.travelAdvisory?.tollInfo && route.travelAdvisory.tollInfo.tollSections?.length > 0) {
+            const tollSections = route.travelAdvisory.tollInfo.tollSections.length;
+            tollAmount = estimateTollCost(tollSections);
+            document.getElementById('tollDetails').innerHTML = 
+                `จำนวนด่าน: <strong>${tollSections} ด่าน</strong><br>` +
+                `ค่าผ่านทางประมาณ: <strong>${tollAmount} บาท</strong> (รถ 4 ล้อ)`;
+            document.getElementById('tollBox').style.display = 'block';
+            document.getElementById('resultCard').style.display = 'none';
+        } else {
+            tollAmount = 0;
+            document.getElementById('tollBox').style.display = 'none';
+            displayResults();
+        }
+    } catch (err) {
+        showError('❌ ผิดพลาด: ' + err.message);
+        console.log(err);
     }
-    
-    displayResults();
 }
 
-// 4. คำนวณและแสดงราคา
+// วาดเส้นทางบนแผนที่
+function drawDirections(avoidTolls) {
+    const service = new google.maps.DirectionsService();
+    service.route({
+        origin: new google.maps.LatLng(originCoords.lat, originCoords.lng),
+        destination: new google.maps.LatLng(destCoords.lat, destCoords.lng),
+        travelMode: 'DRIVE',
+        avoidTolls: avoidTolls
+    }, function(result, status) {
+        if (status === 'OK') {
+            directionsRenderer.setDirections(result);
+            // อัพเดทระยะทางและเวลาจากเส้นทางจริง
+            const leg = result.routes[0].legs[0];
+            currentRouteData.distanceKm = (leg.distance.value / 1000).toFixed(1);
+            currentRouteData.durationMin = Math.ceil(leg.duration.value / 60);
+        }
+    });
+}
+
+// ประเมินค่าผ่านทาง
+function estimateTollCost(sections) {
+    const baseRate = 35;
+    const perGate = 22;
+    return baseRate + ((sections - 1) * perGate);
+}
+
+// ยืนยันการเลือกทางด่วน/ไม่ด่วน
+async function confirmToll(wantToll) {
+    hideError();
+    document.getElementById('tollBox').style.display = 'none';
+    
+    if (!wantToll) {
+        tollAmount = 0;
+        currentRouteData.useToll = false;
+        drawDirections(true); // วาดเส้นทางใหม่โดยหลีกเลี่ยงค่าผ่านทาง
+        // รออัพเดทข้อมูลแล้วแสดงผล
+        setTimeout(displayResults, 500);
+    } else {
+        displayResults();
+    }
+}
+
+// แสดงผลราคา
 function displayResults() {
     const { distanceKm, durationMin } = currentRouteData;
     
-    // แสดงระยะทางและเวลา
     document.getElementById('distText').textContent = `${distanceKm} กม.`;
     document.getElementById('timeText').textContent = `${durationMin} นาที`;
     
-    // แสดงค่าผ่านทางถ้ามี
     if (tollAmount > 0) {
-        document.getElementById('tollRow').style.display = "flex";
+        document.getElementById('tollRow').style.display = 'flex';
         document.getElementById('tollCostText').textContent = `${tollAmount} บาท`;
     } else {
-        document.getElementById('tollRow').style.display = "none";
+        document.getElementById('tollRow').style.display = 'none';
     }
 
-    // สูตรคำนวณราคา (ปรับตามจริงได้)
     const baseFare = 35;
     const perKmRate = 6;
     const distanceNum = parseFloat(distanceKm);
-    
     const basePrice = baseFare + (distanceNum * perKmRate);
     const finalPrice = basePrice + tollAmount;
     
-    // แสดงราคาค่าบริการต่างๆ
     document.getElementById('grabPrice').textContent = `~${Math.round(finalPrice * 1.15)} บาท`;
     document.getElementById('boltPrice').textContent = `~${Math.round(finalPrice * 1.05)} บาท`;
     document.getElementById('indrivePrice').textContent = `~${Math.round(finalPrice * 0.95)} บาท`;
     document.getElementById('taxiPrice').textContent = `~${Math.round(finalPrice)} บาท`;
     
-    document.getElementById('resultCard').style.display = "block";
+    document.getElementById('resultCard').style.display = 'block';
 }
 </script>
+
+<!-- ✅ โหลด Google Maps JavaScript API -->
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAWxrmqcWiMppxhmHYWd1yNqMMi6BzfHMg&libraries=geocoding&callback=initMap&language=th&region=TH" async defer></script>
 
 </body>
 </html>
