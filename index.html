@@ -18,548 +18,314 @@
             --bolt: #000000;
             --indrive: #ff6b00;
             --taxi: #e74c3c;
-            --primary: #2563eb;
-            --success: #16a34a;
-            --light-gray: #f3f4f6;
-            --gray: #9ca3af;
-            --dark: #1f2937;
         }
         body {
-            background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
-            min-height: 100vh;
-            padding-bottom: 40px;
-        }
-        .header {
-            background: white;
+            background-color: #f8f9fa;
             padding: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .header h1 {
-            text-align: center;
-            font-size: 1.25rem;
-            color: var(--dark);
-            font-weight: 700;
-        }
-        .header p {
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--gray);
-            margin-top: 4px;
-        }
-        .tabs {
-            display: flex;
-            background: white;
-            margin: 12px;
-            border-radius: 12px;
-            padding: 4px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-        }
-        .tab {
-            flex: 1;
-            padding: 12px 8px;
-            text-align: center;
-            border-radius: 10px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            color: var(--gray);
-            cursor: pointer;
-            transition: all 0.25s;
-        }
-        .tab.active {
-            background: var(--primary);
-            color: white;
-        }
-        .container {
-            max-width: 540px;
+            max-width: 700px;
             margin: 0 auto;
-            padding: 0 12px;
         }
-        .card {
+        h1 {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #333;
+        }
+        .input-group {
             background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
-        }
-        .location-row {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .location-dots {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 4px 0;
-        }
-        .dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-        }
-        .dot.green { background: var(--success); }
-        .dot.orange { background: var(--indrive); }
-        .dot-line {
-            width: 2px;
-            height: 24px;
-            background: #d1d5db;
-        }
-        .location-inputs {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-        .location-input {
-            padding: 12px 14px;
-            background: var(--light-gray);
-            border: none;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            outline: none;
-        }
-        .map-container {
-            width: 100%;
-            height: 220px;
+            padding: 15px;
             border-radius: 12px;
-            overflow: hidden;
-            margin: 14px 0;
-            border: 1px solid #e5e7eb;
-        }
-        .map-container iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         label {
             display: block;
-            font-size: 0.85rem;
+            margin-bottom: 6px;
             font-weight: 600;
-            color: #4b5563;
-            margin: 14px 0 6px;
+            color: #444;
         }
-        select, input[type="number"] {
+        input {
             width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            outline: none;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
         }
-        .btn-calculate {
+        button {
             width: 100%;
-            background: var(--primary);
+            padding: 14px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
             color: white;
             border: none;
-            padding: 14px;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 17px;
             font-weight: 600;
-            margin-top: 18px;
             cursor: pointer;
-            transition: transform 0.2s, background 0.2s;
+            margin-top: 10px;
         }
-        .btn-calculate:hover {
-            background: #1d4ed8;
+        button:hover {
+            opacity: 0.95;
         }
-        .results-section {
-            margin-top: 20px;
+        .toll-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 10px;
+            padding: 18px;
+            margin: 20px 0;
+            display: none;
         }
-        .results-header {
+        .toll-option {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        .toll-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        .btn-yes {
+            background: #28a745;
+            color: white;
+        }
+        .btn-no {
+            background: #dc3545;
+            color: white;
+        }
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 18px;
+            margin-top: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: none;
+        }
+        .price-row {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
         }
-        .results-header h3 {
-            font-size: 1rem;
-            color: var(--dark);
+        .price-row:last-child {
+            border-bottom: none;
         }
-        .route-info {
-            font-size: 0.8rem;
-            color: var(--gray);
-        }
-        .price-card {
-            display: flex;
-            align-items: center;
-            padding: 14px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-        }
-        .price-card.best-value {
-            border-color: var(--success);
-            background: #f0fdf4;
-        }
-        .price-card .app-logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 700;
-            font-size: 0.8rem;
-            margin-right: 12px;
-        }
-        .app-logo.grab { background: var(--grab); }
-        .app-logo.bolt { background: var(--bolt); }
-        .app-logo.indrive { background: var(--indrive); }
-        .app-logo.taxi { background: var(--taxi); }
-        .price-details {
-            flex: 1;
-        }
-        .price-details .service-name {
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: var(--dark);
-        }
-        .price-details .service-desc {
-            font-size: 0.75rem;
-            color: var(--gray);
-            margin-top: 2px;
+        .price-label {
+            font-weight: 500;
         }
         .price-value {
             font-weight: 700;
-            font-size: 1rem;
-            color: var(--dark);
-        }
-        .best-badge {
-            font-size: 0.7rem;
-            background: var(--success);
-            color: white;
-            padding: 2px 8px;
-            border-radius: 20px;
-            margin-left: 8px;
-        }
-        .hidden { display: none !important; }
-        .compare-self {
-            margin-top: 16px;
-            padding: 14px;
-            background: #eff6ff;
-            border-radius: 12px;
-        }
-        .compare-self h4 {
-            font-size: 0.85rem;
-            color: var(--primary);
-            margin-bottom: 8px;
-        }
-        .two-col {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .note-text {
-            font-size: 0.7rem;
-            color: var(--gray);
-            margin-top: 10px;
-            line-height: 1.4;
         }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🚕 เปรียบเทียบราคาเรียกรถ</h1>
-        <p>เทียบทุกแอป — เลือกข้อเสนอที่ดีที่สุดก่อนออกเดินทาง</p>
+<h1>🚗 เปรียบเทียบราคาเรียกรถ</h1>
+
+<div class="input-group">
+    <label for="origin">📍 จุดรับ</label>
+    <input type="text" id="origin" placeholder="กรอกที่อยู่จุดรับ...">
+</div>
+
+<div class="input-group">
+    <label for="destination">📍 จุดส่ง</label>
+    <input type="text" id="destination" placeholder="กรอกที่อยู่จุดส่ง...">
+</div>
+
+<button onclick="calculateRoute()">🔍 คำนวณเส้นทาง & ราคา</button>
+
+<!-- กล่องแจ้งค่าผ่านทาง -->
+<div class="toll-box" id="tollBox">
+    <h3>⚠️ เส้นทางนี้มีค่าผ่านทาง</h3>
+    <p id="tollDetails"></p>
+    <div class="toll-option">
+        <button class="toll-btn btn-yes" onclick="confirmToll(true)">✅ ใช่ ขึ้นทางด่วน เพิ่มค่าผ่านทาง</button>
+        <button class="toll-btn btn-no" onclick="confirmToll(false)">❌ ไม่เอา ใช้ถนนธรรมดา</button>
     </div>
+</div>
 
-    <div class="tabs">
-        <div class="tab active" data-tab="ride" onclick="switchTab('ride')">เรียกรถ</div>
-        <div class="tab" data-tab="own" onclick="switchTab('own')">ขับขี่เอง</div>
+<!-- ผลลัพธ์ -->
+<div class="result-card" id="resultCard">
+    <h3>📋 ผลการคำนวณ</h3>
+    <div class="price-row">
+        <span class="price-label">ระยะทาง</span>
+        <span class="price-value" id="distText">-</span>
     </div>
-
-    <div class="container">
-
-        <!-- ═══════════ โหมดเรียกรถ ═══════════ -->
-        <div id="panel-ride">
-            <div class="card">
-                <div class="location-row">
-                    <div class="location-dots">
-                        <div class="dot green"></div>
-                        <div class="dot-line"></div>
-                        <div class="dot orange"></div>
-                    </div>
-                    <div class="location-inputs">
-                        <input type="text" id="pickup" class="location-input" placeholder="จุดรับผู้โดยสาร" value="กรุงเทพมหานคร">
-                        <input type="text" id="dropoff" class="location-input" placeholder="จุดหมายปลายทาง" value="จังหวัดนนทบุรี">
-                    </div>
-                </div>
-
-                <div class="map-container" id="map-ride">
-                    <iframe id="map-ride-frame" src="" allowfullscreen loading="lazy"></iframe>
-                </div>
-
-                <label>ประเภทบริการ / ขนาดรถ:</label>
-                <select id="service-type">
-                    <option value="economy">🚗 รถเก๋งมาตรฐาน (ประหยัด)</option>
-                    <option value="premium">✨ รถยนต์พรีเมียม</option>
-                    <option value="suv">🚙 SUV / รถขนาดใหญ่</option>
-                    <option value="bike">🏍️ มอเตอร์ไซค์รับจ้าง</option>
-                    <option value="van">🚌 รถตู้ / กลุ่มคนเยอะ</option>
-                </select>
-
-                <label>ระยะทางประมาณ (กม.):</label>
-                <input type="number" id="distance" value="15.0" min="0.5" step="0.1">
-
-                <label>ค่าผ่านทางรวม (บาท):</label>
-                <input type="number" id="toll-fee" value="55" min="0">
-
-                <button class="btn-calculate" onclick="calculateRide()">
-                    ✅ คำนวณและเปรียบเทียบราคา
-                </button>
-            </div>
-
-            <div id="ride-results" class="results-section hidden">
-                <div class="card">
-                    <div class="results-header">
-                        <h3>📋 ผลการเปรียบเทียบ</h3>
-                        <span class="route-info" id="route-summary"></span>
-                    </div>
-                    <div id="price-list"></div>
-                    
-                    <div class="compare-self">
-                        <h4>💡 เปรียบเทียบกับการขับขี่เอง</h4>
-                        <div class="two-col">
-                            <div>
-                                <div style="font-size:0.75rem; color:#6b7280;">ค่าขับขี่ประมาณ</div>
-                                <div style="font-weight:700; color:#16a34a;" id="self-estimate">—</div>
-                            </div>
-                            <div>
-                                <div style="font-size:0.75rem; color:#6b7280;">ประหยัดได้</div>
-                                <div style="font-weight:700; color:#2563eb;" id="savings">—</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="note-text">
-                        ⚠️ ราคาประมาณเพื่อการเปรียบเทียบ อ้างอิงตามฐานข้อมูลเดือน ต.ค. 2568<br>
-                        ราคาจริงอาจสูง/ต่ำตามเวลา, สภาพจราจร, โปรโมชั่น และนโยบายของแอป<br>
-                        inDrive: ผู้ใช้เสนอราคา → คนขับตอบรับ ไม่มีราคาคงที่
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <!-- ═══════════ โหมดขับขี่เอง ═══════════ -->
-        <div id="panel-own" class="hidden">
-            <div class="card">
-                <h3 style="margin-bottom:16px; font-size:1rem;">🚘 คำนวณต้นทุนการขับขี่ส่วนตัว</h3>
-
-                <label>จุดเริ่มต้น:</label>
-                <input type="text" id="own-start" class="location-input" value="กรุงเทพมหานคร">
-
-                <label>จุดหมายปลายทาง:</label>
-                <input type="text" id="own-end" class="location-input" value="จังหวัดนนทบุรี">
-
-                <div class="map-container" id="map-own">
-                    <iframe id="map-own-frame" src="" allowfullscreen loading="lazy"></iframe>
-                </div>
-
-                <label>ประเภทรถ / อัตราการประหยัด:</label>
-                <select id="car-type">
-                    <option value="18">Eco Car 1.2L — 18 กม./ลิตร</option>
-                    <option value="13">Sedan 1.6–2.4L — 13 กม./ลิตร</option>
-                    <option value="10">SUV / กระบะ — 10 กม./ลิตร</option>
-                    <option value="6.6" data-ev="true">รถยนต์ไฟฟ้า EV — 6.6 กม./หน่วย</option>
-                    <option value="35">มอเตอร์ไซค์ 125–150ซีซี — 35 กม./ลิตร</option>
-                </select>
-
-                <label id="fuel-label">ราคาน้ำมันเฉลี่ย (บาท/ลิตร):</label>
-                <input type="number" id="fuel-rate" value="32.50" step="0.1">
-
-                <label>ระยะทางรวม (กม.):</label>
-                <input type="number" id="own-distance" value="15.0" step="0.1">
-
-                <label>ค่าผ่านทาง (บาท):</label>
-                <input type="number" id="own-toll" value="55">
-
-                <button class="btn-calculate" onclick="calculateOwn()">
-                    ✅ คำนวณต้นทุน
-                </button>
-            </div>
-
-            <div id="own-results" class="results-section hidden">
-                <div class="card">
-                    <h3 style="margin-bottom:12px;">📋 สรุปต้นทุนการขับขี่</h3>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
-                        <span>ระยะทาง</span>
-                        <span id="o-dist"></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
-                        <span>เชื้อเพลิงที่ใช้</span>
-                        <span id="o-fuel"></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
-                        <span>ค่าน้ำมัน/ค่าไฟ</span>
-                        <span id="o-fcost"></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
-                        <span>ค่าผ่านทาง</span>
-                        <span id="o-toll"></span>
-                    </div>
-                    <div style="display:flex; justify-content:space-between; padding:10px 0; margin-top:6px; font-weight:700; font-size:1.1rem; color:#16a34a;">
-                        <span>💰 ต้นทุนรวม</span>
-                        <span id="o-total"></span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="price-row">
+        <span class="price-label">เวลาโดยประมาณ</span>
+        <span class="price-value" id="timeText">-</span>
     </div>
+    <div class="price-row" id="tollRow" style="display:none;">
+        <span class="price-label">ค่าผ่านทาง</span>
+        <span class="price-value" id="tollCostText">-</span>
+    </div>
+    <div class="price-row">
+        <span class="price-label">ค่าโดยสาร Grab</span>
+        <span class="price-value" id="grabPrice">-</span>
+    </div>
+    <div class="price-row">
+        <span class="price-label">ค่าโดยสาร Bolt</span>
+        <span class="price-value" id="boltPrice">-</span>
+    </div>
+    <div class="price-row">
+        <span class="price-label">ค่าโดยสาร InDrive</span>
+        <span class="price-value" id="indrivePrice">-</span>
+    </div>
+    <div class="price-row">
+        <span class="price-label">ค่าแท็กซี่มิเตอร์</span>
+        <span class="price-value" id="taxiPrice">-</span>
+    </div>
+</div>
 
 <script>
-// ═══════════ ฐานข้อมูลแอปและประเภทรถ ═══════════
-const APP_DATA = {
-    economy: [
-        { app: 'Grab', service: 'JustGrab / GrabCar', desc: 'รถเก๋งมาตรฐาน รอไม่นาน', baseFare: 35, perKm: 9.5, perMin: 1.2, fee: 15, surge: 1.0 },
-        { app: 'Bolt', service: 'Bolt Standard', desc: 'ราคาประหยัดกว่าเฉลี่ย', baseFare: 30, perKm: 7.8, perMin: 0.9, fee: 10, surge: 1.0 },
-        { app: 'inDrive', service: 'inDrive Economy', desc: 'เสนอราคาต่อรองได้', baseFare: 0, perKm: 6.5, perMin: 0, fee: 0, surge: 0.9, note: 'ราคาประมาณ ต่อรองได้' },
-        { app: 'แท็กซี่', service: 'แท็กซี่มิเตอร์', desc: 'มิเตอร์ทางการ', baseFare: 35, perKm: 6.5, perMin: 0, fee: 0, surge: 1.0 }
-    ],
-    premium: [
-        { app: 'Grab', service: 'GrabCar Premium', desc: 'รถใหม่ สะดวกสบาย', baseFare: 60, perKm: 12.5, perMin: 1.8, fee: 25, surge: 1.0 },
-        { app: 'Bolt', service: 'Bolt Premium', desc: 'รถระดับสูง', baseFare: 50, perKm: 10.5, perMin: 1.4, fee: 18, surge: 1.0 },
-        { app: 'inDrive', service: 'inDrive Comfort', desc: 'ต่อรองราคาได้', baseFare: 0, perKm: 9.0, perMin: 0, fee: 0, surge: 0.9 }
-    ],
-    suv: [
-        { app: 'Grab', service: 'GrabSUV', desc: 'รถใหญ่ นั่งได้มาก', baseFare: 70, perKm: 14.0, perMin: 2.0, fee: 30, surge: 1.0 },
-        { app: 'Bolt', service: 'Bolt XL', desc: 'รถขนาดใหญ่', baseFare: 60, perKm: 12.0, perMin: 1.6, fee: 25, surge: 1.0 },
-        { app: 'inDrive', service: 'inDrive SUV/Van', desc: 'เสนอราคาเอง', baseFare: 0, perKm: 11.0, perMin: 0, fee: 0, surge: 0.9 }
-    ],
-    bike: [
-        { app: 'Grab', service: 'GrabBike', desc: 'ทะลุการจราจร รวดเร็ว', baseFare: 15, perKm: 3.5, perMin: 0.5, fee: 5, surge: 1.0 },
-        { app: 'Bolt', service: 'Bolt Bike', desc: 'มอเตอร์ไซค์รับจ้าง', baseFare: 12, perKm: 3.0, perMin: 0.4, fee: 4, surge: 1.0 },
-        { app: 'inDrive', service: 'inDrive Bike', desc: 'ตกลงราคากันเอง', baseFare: 0, perKm: 2.5, perMin: 0, fee: 0, surge: 0.9 }
-    ],
-    van: [
-        { app: 'Grab', service: 'GrabVan', desc: 'รถตู้ 6–7 ที่นั่ง', baseFare: 100, perKm: 18.0, perMin: 2.5, fee: 40, surge: 1.0 },
-        { app: 'inDrive', service: 'inDrive Van', desc: 'รถตู้/ใหญ่ ต่อรองได้', baseFare: 0, perKm: 15.0, perMin: 0, fee: 0, surge: 0.95 }
-    ]
-};
+// 🔑 ใส่ API Key ตรงนี้ (ใส่ให้แล้วเรียบร้อย)
+const API_KEY = "AIzaSyAWxrmqcWiMppxhmHYWd1yNqMMi6BzfHMg";
 
-// สลับแท็บ
-function switchTab(tabName) {
-    document.querySelectorAll('.tab').forEach(t => {
-        t.classList.toggle('active', t.dataset.tab === tabName);
-    });
-    document.getElementById('panel-ride').classList.toggle('hidden', tabName !== 'ride');
-    document.getElementById('panel-own').classList.toggle('hidden', tabName !== 'own');
+// ตัวแปรเก็บข้อมูลเส้นทาง
+let currentRouteData = null;
+let tollAmount = 0;
+
+// 1. คำนวณเส้นทาง
+async function calculateRoute() {
+    const origin = document.getElementById('origin').value.trim();
+    const destination = document.getElementById('destination').value.trim();
     
-    if (tabName === 'ride') updateMap('ride');
-    else updateMap('own');
-}
-
-// อัพเดทแผนที่
-function updateMap(mode) {
-    const start = mode === 'ride' 
-        ? document.getElementById('pickup').value 
-        : document.getElementById('own-start').value;
-    const end = mode === 'ride'
-        ? document.getElementById('dropoff').value
-        : document.getElementById('own-end').value;
-    
-    const frame = document.getElementById(`map-${mode}-frame`);
-    frame.src = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyDuvV2jSq8rKXzX0FbY0uLdYgXz9bV8b7c&origin=${encodeURIComponent(start)}&destination=${encodeURIComponent(end)}&language=th`;
-}
-
-// เปลี่ยนป้ายหน่วยสำหรับ EV
-document.getElementById('car-type').addEventListener('change', function() {
-    const isEV = this.selectedOptions[0].hasAttribute('data-ev');
-    const label = document.getElementById('fuel-label');
-    const input = document.getElementById('fuel-rate');
-    if (isEV) {
-        label.textContent = 'ค่าไฟเฉลี่ย (บาท/หน่วย kWh):';
-        input.value = 4.50;
-    } else {
-        label.textContent = 'ราคาน้ำมันเฉลี่ย (บาท/ลิตร):';
-        input.value = 32.50;
+    if (!origin || !destination) {
+        alert('กรุณากรอกจุดรับและจุดส่งให้ครบถ้วน');
+        return;
     }
-});
 
-// คำนวณโหมดเรียกรถ
-function calculateRide() {
-    const dist = parseFloat(document.getElementById('distance').value);
-    const toll = parseFloat(document.getElementById('toll-fee').value) || 0;
-    const serviceKey = document.getElementById('service-type').value;
-    const travelTimeMin = Math.round(dist * 1.5);
-
-    updateMap('ride');
-
-    const services = APP_DATA[serviceKey];
-    const results = services.map(s => {
-        let price;
-        if (s.baseFare === 0) {
-            price = (dist * s.perKm) * s.surge;
-        } else {
-            price = (s.baseFare + dist * s.perKm + travelTimeMin * s.perMin + s.fee) * s.surge;
-        }
-        price += toll;
-        return { ...s, total: Math.round(price) };
+    // เรียก Google Routes API
+    const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+    
+    const response = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-Goog-Api-Key": API_KEY,
+            "X-Goog-FieldMask": "routes.duration,routes.distanceMeters,routes.travelAdvisory.tollInfo"
+        },
+        body: JSON.stringify({
+            origin: { address: origin },
+            destination: { address: destination },
+            travelMode: "DRIVE",
+            extraComputations: ["TOLLS"],
+            routeModifiers: {
+                vehicleInfo: { type: "CAR" },
+                tollPasses: ["NOTOLLPASS"]
+            }
+        })
     });
 
-    results.sort((a, b) => a.total - b.total);
-    const lowestPrice = results[0].total;
-
-    document.getElementById('route-summary').textContent = `${dist.toFixed(1)} กม. · ประมาณ ${travelTimeMin} นาที`;
-
-    const container = document.getElementById('price-list');
-    container.innerHTML = results.map(r => {
-        const isBest = r.total === lowestPrice;
-        return `
-        <div class="price-card ${isBest ? 'best-value' : ''}">
-            <div class="app-logo ${r.app.toLowerCase()}">${r.app.substring(0,4)}</div>
-            <div class="price-details">
-                <div class="service-name">${r.service}${isBest ? '<span class="best-badge">ถูกสุด ✅</span>' : ''}</div>
-                <div class="service-desc">${r.desc}${r.note ? ' · ' + r.note : ''}</div>
-            </div>
-            <div class="price-value">฿${r.total}</div>
-        </div>`;
-    }).join('');
-
-    const avgSelfCost = dist * 5.0 + toll;
-    const saving = lowestPrice > avgSelfCost ? lowestPrice - avgSelfCost : avgSelfCost - lowestPrice;
-    const savingText = lowestPrice <= avgSelfCost 
-        ? `เรียกรถประหยัดกว่า ฿${Math.round(saving)}`
-        : `ขับเองประหยัดกว่า ฿${Math.round(saving)}`;
+    const data = await response.json();
     
-    document.getElementById('self-estimate').textContent = `฿${Math.round(avgSelfCost)}`;
-    document.getElementById('savings').textContent = savingText;
+    if (!data.routes || data.routes.length === 0) {
+        alert("ไม่พบเส้นทาง กรุณาตรวจสอบที่อยู่อีกครั้ง");
+        return;
+    }
 
-    document.getElementById('ride-results').classList.remove('hidden');
+    const route = data.routes[0];
+    const distanceKm = (route.distanceMeters / 1000).toFixed(1);
+    const durationMin = Math.ceil(parseInt(route.duration.replace("s", "")) / 60);
+    
+    // เก็บข้อมูลไว้ใช้ต่อ
+    currentRouteData = { distanceKm, durationMin, route };
+
+    // ตรวจสอบว่ามีค่าผ่านทางไหม
+    if (route.travelAdvisory?.tollInfo && route.travelAdvisory.tollInfo.tollSections?.length > 0) {
+        const tollSections = route.travelAdvisory.tollInfo.tollSections.length;
+        tollAmount = estimateTollCost(tollSections);
+        
+        // แสดงกล่องถามลูกค้า
+        document.getElementById('tollDetails').innerHTML = 
+            `จำนวนด่าน: <strong>${tollSections} ด่าน</strong><br>` +
+            `ค่าผ่านทางโดยประมาณ: <strong>${tollAmount} บาท</strong> (รถ 4 ล้อ)`;
+        
+        document.getElementById('tollBox').style.display = "block";
+        document.getElementById('resultCard').style.display = "none";
+    } else {
+        // ไม่มีค่าผ่านทาง แสดงผลทันที
+        tollAmount = 0;
+        displayResults();
+    }
 }
 
-// คำนวณโหมดขับขี่เอง
-function calculateOwn() {
-    const efficiency = parseFloat(document.getElementById('car-type').value);
-    const rate = parseFloat(document.getElementById('fuel-rate').value);
-    const dist = parseFloat(document.getElementById('own-distance').value);
-    const toll = parseFloat(document.getElementById('own-toll').value) || 0;
-    
-    const isEV = document.getElementById('car-type').selectedOptions[0].hasAttribute('data-ev');
-    const fuelUsed = dist / efficiency;
-    const fuelCost = fuelUsed * rate;
-    const total = fuelCost + toll;
-
-    updateMap('own');
-
-    document.getElementById('o-dist').textContent = `${dist.toFixed(1)} กม.`;
-    document.getElementById('o-fuel').textContent = `${fuelUsed.toFixed(2)} ${isEV ? 'หน่วย kWh' : 'ลิตร'}`;
-    document.getElementById('o-fcost').textContent = `฿${fuelCost.toFixed(2)}`;
-    document.getElementById('o-toll').textContent = `฿${toll.toFixed(2)}`;
-    document.getElementById('o-total').textContent = `฿${Math.round(total)}`;
-
-    document.getElementById('own-results').classList.remove('hidden');
+// 2. ประเมินค่าผ่านทาง (อ้างอิงอัตราค่าทางด่วนไทย)
+function estimateTollCost(sections) {
+    // อัตราค่าประมาณ: ทางด่วนกรุงเทพฯ และปริมณฑล
+    const baseRate = 35;  // ค่าเริ่มต้น
+    const perGate = 22;   // เฉลี่ยต่อด่าน
+    return baseRate + ((sections - 1) * perGate);
 }
 
-window.onload = () => {
-    updateMap('ride');
-};
+// 3. ลูกค้าเลือกใช้/ไม่ใช้ทางด่วน
+async function confirmToll(wantToll) {
+    document.getElementById('tollBox').style.display = "none";
+    
+    if (!wantToll) {
+        // เรียกเส้นทางใหม่โดยหลีกเลี่ยงค่าผ่านทาง
+        const origin = document.getElementById('origin').value.trim();
+        const destination = document.getElementById('destination').value.trim();
+        
+        const url = "https://routes.googleapis.com/directions/v2:computeRoutes";
+        const response = await fetch(url, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-Goog-Api-Key": API_KEY,
+                "X-Goog-FieldMask": "routes.duration,routes.distanceMeters"
+            },
+            body: JSON.stringify({
+                origin: { address: origin },
+                destination: { address: destination },
+                travelMode: "DRIVE",
+                routeModifiers: { avoidTolls: true }
+            })
+        });
+
+        const data = await response.json();
+        const route = data.routes[0];
+        currentRouteData.distanceKm = (route.distanceMeters / 1000).toFixed(1);
+        currentRouteData.durationMin = Math.ceil(parseInt(route.duration.replace("s", "")) / 60);
+        tollAmount = 0;
+    }
+    
+    displayResults();
+}
+
+// 4. คำนวณและแสดงราคา
+function displayResults() {
+    const { distanceKm, durationMin } = currentRouteData;
+    
+    // แสดงระยะทางและเวลา
+    document.getElementById('distText').textContent = `${distanceKm} กม.`;
+    document.getElementById('timeText').textContent = `${durationMin} นาที`;
+    
+    // แสดงค่าผ่านทางถ้ามี
+    if (tollAmount > 0) {
+        document.getElementById('tollRow').style.display = "flex";
+        document.getElementById('tollCostText').textContent = `${tollAmount} บาท`;
+    } else {
+        document.getElementById('tollRow').style.display = "none";
+    }
+
+    // สูตรคำนวณราคา (ปรับตามจริงได้)
+    const baseFare = 35;
+    const perKmRate = 6;
+    const distanceNum = parseFloat(distanceKm);
+    
+    const basePrice = baseFare + (distanceNum * perKmRate);
+    const finalPrice = basePrice + tollAmount;
+    
+    // แสดงราคาค่าบริการต่างๆ
+    document.getElementById('grabPrice').textContent = `~${Math.round(finalPrice * 1.15)} บาท`;
+    document.getElementById('boltPrice').textContent = `~${Math.round(finalPrice * 1.05)} บาท`;
+    document.getElementById('indrivePrice').textContent = `~${Math.round(finalPrice * 0.95)} บาท`;
+    document.getElementById('taxiPrice').textContent = `~${Math.round(finalPrice)} บาท`;
+    
+    document.getElementById('resultCard').style.display = "block";
+}
 </script>
 
 </body>
