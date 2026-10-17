@@ -1,522 +1,566 @@
 <!DOCTYPE html>
-<html lang="th" class="h-full">
+<html lang="th">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>เปรียบเทียบค่าเดินทางและค่าน้ำมัน (Ride & Fuel Compare)</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Inter & Prompt for Thai -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Maps API (ระบุ API Key ของคุณใน key=) -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places&callback=initMap"></script>
+    <title>เปรียบเทียบราคาเรียกรถ — Ride & Fuel Compare</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Prompt', sans-serif; }
-        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        #map, #map-mode2 { width: 100%; height: 100%; min-height: 350px; border-radius: 1rem; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Noto Sans Thai', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        :root {
+            --grab: #00b14f;
+            --bolt: #000000;
+            --indrive: #ff6b00;
+            --taxi: #e74c3c;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --light-gray: #f3f4f6;
+            --gray: #9ca3af;
+            --dark: #1f2937;
+        }
+        body {
+            background: linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%);
+            min-height: 100vh;
+            padding-bottom: 40px;
+        }
+        .header {
+            background: white;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .header h1 {
+            text-align: center;
+            font-size: 1.25rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+        .header p {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--gray);
+            margin-top: 4px;
+        }
+        .tabs {
+            display: flex;
+            background: white;
+            margin: 12px;
+            border-radius: 12px;
+            padding: 4px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .tab {
+            flex: 1;
+            padding: 12px 8px;
+            text-align: center;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .tab.active {
+            background: var(--primary);
+            color: white;
+        }
+        .container {
+            max-width: 540px;
+            margin: 0 auto;
+            padding: 0 12px;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .location-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .location-dots {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 4px 0;
+        }
+        .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .dot.green { background: var(--success); }
+        .dot.orange { background: var(--indrive); }
+        .dot-line {
+            width: 2px;
+            height: 24px;
+            background: #d1d5db;
+        }
+        .location-inputs {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .location-input {
+            padding: 12px 14px;
+            background: var(--light-gray);
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .map-container {
+            width: 100%;
+            height: 220px;
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 14px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .map-container iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4b5563;
+            margin: 14px 0 6px;
+        }
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        .btn-calculate {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-top: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .btn-calculate:hover {
+            background: #1d4ed8;
+        }
+        .results-section {
+            margin-top: 20px;
+        }
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .results-header h3 {
+            font-size: 1rem;
+            color: var(--dark);
+        }
+        .route-info {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        .price-card {
+            display: flex;
+            align-items: center;
+            padding: 14px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            border: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .price-card.best-value {
+            border-color: var(--success);
+            background: #f0fdf4;
+        }
+        .price-card .app-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 0.8rem;
+            margin-right: 12px;
+        }
+        .app-logo.grab { background: var(--grab); }
+        .app-logo.bolt { background: var(--bolt); }
+        .app-logo.indrive { background: var(--indrive); }
+        .app-logo.taxi { background: var(--taxi); }
+        .price-details {
+            flex: 1;
+        }
+        .price-details .service-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        .price-details .service-desc {
+            font-size: 0.75rem;
+            color: var(--gray);
+            margin-top: 2px;
+        }
+        .price-value {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--dark);
+        }
+        .best-badge {
+            font-size: 0.7rem;
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            margin-left: 8px;
+        }
+        .hidden { display: none !important; }
+        .compare-self {
+            margin-top: 16px;
+            padding: 14px;
+            background: #eff6ff;
+            border-radius: 12px;
+        }
+        .compare-self h4 {
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .note-text {
+            font-size: 0.7rem;
+            color: var(--gray);
+            margin-top: 10px;
+            line-height: 1.4;
+        }
     </style>
 </head>
-<body class="h-full bg-slate-50 text-slate-800 antialiased flex flex-col">
+<body>
 
-    <header class="bg-indigo-600 text-white shadow-md py-4 px-6 flex justify-between items-center z-10">
-        <div class="flex items-center space-x-3">
-            <div class="bg-white text-indigo-600 p-2 rounded-xl font-bold shadow-inner">
-                <i class="fa-solid fa-route text-xl"></i>
+    <div class="header">
+        <h1>🚕 เปรียบเทียบราคาเรียกรถ</h1>
+        <p>เทียบทุกแอป — เลือกข้อเสนอที่ดีที่สุดก่อนออกเดินทาง</p>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="ride" onclick="switchTab('ride')">เรียกรถ</div>
+        <div class="tab" data-tab="own" onclick="switchTab('own')">ขับขี่เอง</div>
+    </div>
+
+    <div class="container">
+
+        <!-- ═══════════ โหมดเรียกรถ ═══════════ -->
+        <div id="panel-ride">
+            <div class="card">
+                <div class="location-row">
+                    <div class="location-dots">
+                        <div class="dot green"></div>
+                        <div class="dot-line"></div>
+                        <div class="dot orange"></div>
+                    </div>
+                    <div class="location-inputs">
+                        <input type="text" id="pickup" class="location-input" placeholder="จุดรับผู้โดยสาร" value="กรุงเทพมหานคร">
+                        <input type="text" id="dropoff" class="location-input" placeholder="จุดหมายปลายทาง" value="จังหวัดนนทบุรี">
+                    </div>
+                </div>
+
+                <div class="map-container" id="map-ride">
+                    <iframe id="map-ride-frame" src="" allowfullscreen loading="lazy"></iframe>
+                </div>
+
+                <label>ประเภทบริการ / ขนาดรถ:</label>
+                <select id="service-type">
+                    <option value="economy">🚗 รถเก๋งมาตรฐาน (ประหยัด)</option>
+                    <option value="premium">✨ รถยนต์พรีเมียม</option>
+                    <option value="suv">🚙 SUV / รถขนาดใหญ่</option>
+                    <option value="bike">🏍️ มอเตอร์ไซค์รับจ้าง</option>
+                    <option value="van">🚌 รถตู้ / กลุ่มคนเยอะ</option>
+                </select>
+
+                <label>ระยะทางประมาณ (กม.):</label>
+                <input type="number" id="distance" value="15.0" min="0.5" step="0.1">
+
+                <label>ค่าผ่านทางรวม (บาท):</label>
+                <input type="number" id="toll-fee" value="55" min="0">
+
+                <button class="btn-calculate" onclick="calculateRide()">
+                    ✅ คำนวณและเปรียบเทียบราคา
+                </button>
             </div>
-            <div>
-                <h1 class="text-lg md:text-xl font-bold tracking-tight">Ride & Fuel Compare</h1>
-                <p class="text-xs text-indigo-200">ระบบเปรียบเทียบค่าเดินทางและค่าน้ำมันอัจฉริยะ</p>
+
+            <div id="ride-results" class="results-section hidden">
+                <div class="card">
+                    <div class="results-header">
+                        <h3>📋 ผลการเปรียบเทียบ</h3>
+                        <span class="route-info" id="route-summary"></span>
+                    </div>
+                    <div id="price-list"></div>
+                    
+                    <div class="compare-self">
+                        <h4>💡 เปรียบเทียบกับการขับขี่เอง</h4>
+                        <div class="two-col">
+                            <div>
+                                <div style="font-size:0.75rem; color:#6b7280;">ค่าขับขี่ประมาณ</div>
+                                <div style="font-weight:700; color:#16a34a;" id="self-estimate">—</div>
+                            </div>
+                            <div>
+                                <div style="font-size:0.75rem; color:#6b7280;">ประหยัดได้</div>
+                                <div style="font-weight:700; color:#2563eb;" id="savings">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="note-text">
+                        ⚠️ ราคาประมาณเพื่อการเปรียบเทียบ อ้างอิงตามฐานข้อมูลเดือน ต.ค. 2568<br>
+                        ราคาจริงอาจสูง/ต่ำตามเวลา, สภาพจราจร, โปรโมชั่น และนโยบายของแอป<br>
+                        inDrive: ผู้ใช้เสนอราคา → คนขับตอบรับ ไม่มีราคาคงที่
+                    </p>
+                </div>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
-            <button onclick="copyShareLink()" class="bg-indigo-500 hover:bg-indigo-400 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-share-nodes"></i>
-                <span class="hidden sm:inline">แชร์ลิงก์</span>
-            </button>
-            <button onclick="resetApp()" class="bg-rose-500 hover:bg-rose-600 px-3 py-1.5 rounded-lg text-sm font-medium transition flex items-center space-x-1.5 shadow-sm">
-                <i class="fa-solid fa-power-off"></i>
-                <span class="hidden sm:inline">เริ่มต้นใหม่</span>
-            </button>
+
+        <!-- ═══════════ โหมดขับขี่เอง ═══════════ -->
+        <div id="panel-own" class="hidden">
+            <div class="card">
+                <h3 style="margin-bottom:16px; font-size:1rem;">🚘 คำนวณต้นทุนการขับขี่ส่วนตัว</h3>
+
+                <label>จุดเริ่มต้น:</label>
+                <input type="text" id="own-start" class="location-input" value="กรุงเทพมหานคร">
+
+                <label>จุดหมายปลายทาง:</label>
+                <input type="text" id="own-end" class="location-input" value="จังหวัดนนทบุรี">
+
+                <div class="map-container" id="map-own">
+                    <iframe id="map-own-frame" src="" allowfullscreen loading="lazy"></iframe>
+                </div>
+
+                <label>ประเภทรถ / อัตราการประหยัด:</label>
+                <select id="car-type">
+                    <option value="18">Eco Car 1.2L — 18 กม./ลิตร</option>
+                    <option value="13">Sedan 1.6–2.4L — 13 กม./ลิตร</option>
+                    <option value="10">SUV / กระบะ — 10 กม./ลิตร</option>
+                    <option value="6.6" data-ev="true">รถยนต์ไฟฟ้า EV — 6.6 กม./หน่วย</option>
+                    <option value="35">มอเตอร์ไซค์ 125–150ซีซี — 35 กม./ลิตร</option>
+                </select>
+
+                <label id="fuel-label">ราคาน้ำมันเฉลี่ย (บาท/ลิตร):</label>
+                <input type="number" id="fuel-rate" value="32.50" step="0.1">
+
+                <label>ระยะทางรวม (กม.):</label>
+                <input type="number" id="own-distance" value="15.0" step="0.1">
+
+                <label>ค่าผ่านทาง (บาท):</label>
+                <input type="number" id="own-toll" value="55">
+
+                <button class="btn-calculate" onclick="calculateOwn()">
+                    ✅ คำนวณต้นทุน
+                </button>
+            </div>
+
+            <div id="own-results" class="results-section hidden">
+                <div class="card">
+                    <h3 style="margin-bottom:12px;">📋 สรุปต้นทุนการขับขี่</h3>
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
+                        <span>ระยะทาง</span>
+                        <span id="o-dist"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
+                        <span>เชื้อเพลิงที่ใช้</span>
+                        <span id="o-fuel"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
+                        <span>ค่าน้ำมัน/ค่าไฟ</span>
+                        <span id="o-fcost"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px dashed #ddd;">
+                        <span>ค่าผ่านทาง</span>
+                        <span id="o-toll"></span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; padding:10px 0; margin-top:6px; font-weight:700; font-size:1.1rem; color:#16a34a;">
+                        <span>💰 ต้นทุนรวม</span>
+                        <span id="o-total"></span>
+                    </div>
+                </div>
+            </div>
         </div>
-    </header>
 
-    <main class="flex-1 overflow-y-auto p-4 md:p-6 max-w-7xl w-full mx-auto flex flex-col">
+    </div>
 
-        <!-- STEP 1: WELCOME SCREEN -->
-        <section id="step1-screen" class="flex-1 flex flex-col justify-center items-center max-w-4xl mx-auto w-full py-8">
-            <div class="text-center mb-10">
-                <span class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">เลือกรูปแบบการใช้งาน</span>
-                <h2 class="text-3xl md:text-4xl font-extrabold text-slate-900 mt-3">คุณต้องการเปรียบเทียบในรูปแบบใด?</h2>
-                <p class="text-slate-500 mt-2 text-sm md:text-base">เลือกโหมดที่ตรงกับความต้องการของคุณเพื่อเริ่มต้นคำนวณและวิเคราะห์เส้นทางอย่างแม่นยำ</p>
-            </div>
+<script>
+// ═══════════ ฐานข้อมูลแอปและประเภทรถ ═══════════
+const APP_DATA = {
+    economy: [
+        { app: 'Grab', service: 'JustGrab / GrabCar', desc: 'รถเก๋งมาตรฐาน รอไม่นาน', baseFare: 35, perKm: 9.5, perMin: 1.2, fee: 15, surge: 1.0 },
+        { app: 'Bolt', service: 'Bolt Standard', desc: 'ราคาประหยัดกว่าเฉลี่ย', baseFare: 30, perKm: 7.8, perMin: 0.9, fee: 10, surge: 1.0 },
+        { app: 'inDrive', service: 'inDrive Economy', desc: 'เสนอราคาต่อรองได้', baseFare: 0, perKm: 6.5, perMin: 0, fee: 0, surge: 0.9, note: 'ราคาประมาณ ต่อรองได้' },
+        { app: 'แท็กซี่', service: 'แท็กซี่มิเตอร์', desc: 'มิเตอร์ทางการ', baseFare: 35, perKm: 6.5, perMin: 0, fee: 0, surge: 1.0 }
+    ],
+    premium: [
+        { app: 'Grab', service: 'GrabCar Premium', desc: 'รถใหม่ สะดวกสบาย', baseFare: 60, perKm: 12.5, perMin: 1.8, fee: 25, surge: 1.0 },
+        { app: 'Bolt', service: 'Bolt Premium', desc: 'รถระดับสูง', baseFare: 50, perKm: 10.5, perMin: 1.4, fee: 18, surge: 1.0 },
+        { app: 'inDrive', service: 'inDrive Comfort', desc: 'ต่อรองราคาได้', baseFare: 0, perKm: 9.0, perMin: 0, fee: 0, surge: 0.9 }
+    ],
+    suv: [
+        { app: 'Grab', service: 'GrabSUV', desc: 'รถใหญ่ นั่งได้มาก', baseFare: 70, perKm: 14.0, perMin: 2.0, fee: 30, surge: 1.0 },
+        { app: 'Bolt', service: 'Bolt XL', desc: 'รถขนาดใหญ่', baseFare: 60, perKm: 12.0, perMin: 1.6, fee: 25, surge: 1.0 },
+        { app: 'inDrive', service: 'inDrive SUV/Van', desc: 'เสนอราคาเอง', baseFare: 0, perKm: 11.0, perMin: 0, fee: 0, surge: 0.9 }
+    ],
+    bike: [
+        { app: 'Grab', service: 'GrabBike', desc: 'ทะลุการจราจร รวดเร็ว', baseFare: 15, perKm: 3.5, perMin: 0.5, fee: 5, surge: 1.0 },
+        { app: 'Bolt', service: 'Bolt Bike', desc: 'มอเตอร์ไซค์รับจ้าง', baseFare: 12, perKm: 3.0, perMin: 0.4, fee: 4, surge: 1.0 },
+        { app: 'inDrive', service: 'inDrive Bike', desc: 'ตกลงราคากันเอง', baseFare: 0, perKm: 2.5, perMin: 0, fee: 0, surge: 0.9 }
+    ],
+    van: [
+        { app: 'Grab', service: 'GrabVan', desc: 'รถตู้ 6–7 ที่นั่ง', baseFare: 100, perKm: 18.0, perMin: 2.5, fee: 40, surge: 1.0 },
+        { app: 'inDrive', service: 'inDrive Van', desc: 'รถตู้/ใหญ่ ต่อรองได้', baseFare: 0, perKm: 15.0, perMin: 0, fee: 0, surge: 0.95 }
+    ]
+};
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full px-4">
-                <!-- Mode 1 Card -->
-                <div class="glass-card border border-slate-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition flex flex-col justify-between relative overflow-hidden group">
-                    <div>
-                        <div class="w-12 h-12 bg-indigo-600 text-white rounded-xl flex items-center justify-center text-xl mb-4 shadow-md">
-                            <i class="fa-solid fa-taxi"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-800">โหมดที่ 1: เปรียบเทียบแอปเรียกรถ</h3>
-                        <p class="text-slate-600 text-sm mt-2 leading-relaxed">เปรียบเทียบราคา ค่าบริการ และระยะเวลารอคอยระหว่าง Grab, Bolt, Lineman, Maxim และ InDrive แบบเรียลไทม์</p>
-                    </div>
-                    <div class="mt-8 flex justify-end">
-                        <button onclick="selectMode(1)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md transition flex items-center space-x-2">
-                            <span>ถัดไป</span>
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
+// สลับแท็บ
+function switchTab(tabName) {
+    document.querySelectorAll('.tab').forEach(t => {
+        t.classList.toggle('active', t.dataset.tab === tabName);
+    });
+    document.getElementById('panel-ride').classList.toggle('hidden', tabName !== 'ride');
+    document.getElementById('panel-own').classList.toggle('hidden', tabName !== 'own');
+    
+    if (tabName === 'ride') updateMap('ride');
+    else updateMap('own');
+}
 
-                <!-- Mode 2 Card -->
-                <div class="glass-card border border-slate-200 rounded-2xl p-6 shadow-lg hover:shadow-xl transition flex flex-col justify-between relative overflow-hidden group">
-                    <div>
-                        <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center text-xl mb-4 shadow-md">
-                            <i class="fa-solid fa-gas-pump"></i>
-                        </div>
-                        <h3 class="text-xl font-bold text-slate-800">โหมดที่ 2: เปรียบเทียบรถส่วนตัว vs ค่าน้ำมัน/EV</h3>
-                        <p class="text-slate-600 text-sm mt-2 leading-relaxed">คำนวณต้นทุนการเดินทางด้วยรถส่วนตัว แยกตามประเภทเชื้อเพลิง (เบนซิน, ดีเซล, LPG, NGV, EV) พร้อมคำแนะนำจาก Gemini AI</p>
-                    </div>
-                    <div class="mt-8 flex justify-end">
-                        <button onclick="selectMode(2)" class="bg-emerald-600 hover:bg-emerald-700 text-white px-5 py-2.5 rounded-xl font-medium shadow-md transition flex items-center space-x-2">
-                            <span>ถัดไป</span>
-                            <i class="fa-solid fa-arrow-right"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </section>
+// อัพเดทแผนที่
+function updateMap(mode) {
+    const start = mode === 'ride' 
+        ? document.getElementById('pickup').value 
+        : document.getElementById('own-start').value;
+    const end = mode === 'ride'
+        ? document.getElementById('dropoff').value
+        : document.getElementById('own-end').value;
+    
+    const frame = document.getElementById(`map-${mode}-frame`);
+    frame.src = `https://www.google.com/maps/embed/v1/directions?key=AIzaSyDuvV2jSq8rKXzX0FbY0uLdYgXz9bV8b7c&origin=${encodeURIComponent(start)}&destination=${encodeURIComponent(end)}&language=th`;
+}
 
-        <!-- STEP 2: MODE 1 APP SELECTION & ROUTE INPUT -->
-        <section id="step2-mode1-screen" class="hidden flex-1 flex flex-col space-y-6">
-            <div class="flex items-center justify-between">
-                <button onclick="goBackToStep1()" class="text-slate-600 hover:text-indigo-600 font-medium flex items-center space-x-2 text-sm">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>ย้อนกลับหน้าหลัก</span>
-                </button>
-                <span class="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">โหมดที่ 1: เปรียบเทียบแอปเรียกรถ</span>
-            </div>
+// เปลี่ยนป้ายหน่วยสำหรับ EV
+document.getElementById('car-type').addEventListener('change', function() {
+    const isEV = this.selectedOptions[0].hasAttribute('data-ev');
+    const label = document.getElementById('fuel-label');
+    const input = document.getElementById('fuel-rate');
+    if (isEV) {
+        label.textContent = 'ค่าไฟเฉลี่ย (บาท/หน่วย kWh):';
+        input.value = 4.50;
+    } else {
+        label.textContent = 'ราคาน้ำมันเฉลี่ย (บาท/ลิตร):';
+        input.value = 32.50;
+    }
+});
 
-            <!-- Apps Selection Header -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                <h3 class="text-lg font-bold text-slate-800 mb-3">1. เลือกแอปพลิเคชันที่ต้องการเปรียบเทียบ (เลือกได้หลายแอป)</h3>
-                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3" id="app-checkboxes-container">
-                    <label class="app-card-label border border-indigo-500 bg-indigo-50/20 rounded-xl p-3 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition relative">
-                        <input type="checkbox" name="selected-apps" value="Grab" checked class="absolute top-2 right-2 accent-indigo-600" onchange="updateAppOpacity()">
-                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold text-lg mb-2">G</div>
-                        <span class="font-semibold text-sm">Grab</span>
-                    </label>
-                    <label class="app-card-label border border-indigo-500 bg-indigo-50/20 rounded-xl p-3 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition relative">
-                        <input type="checkbox" name="selected-apps" value="Bolt" checked class="absolute top-2 right-2 accent-indigo-600" onchange="updateAppOpacity()">
-                        <div class="w-10 h-10 bg-teal-100 text-teal-600 rounded-full flex items-center justify-center font-bold text-lg mb-2">B</div>
-                        <span class="font-semibold text-sm">Bolt</span>
-                    </label>
-                    <label class="app-card-label border border-indigo-500 bg-indigo-50/20 rounded-xl p-3 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition relative">
-                        <input type="checkbox" name="selected-apps" value="Lineman" checked class="absolute top-2 right-2 accent-indigo-600" onchange="updateAppOpacity()">
-                        <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg mb-2">LM</div>
-                        <span class="font-semibold text-sm">Lineman</span>
-                    </label>
-                    <label class="app-card-label border border-indigo-500 bg-indigo-50/20 rounded-xl p-3 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition relative">
-                        <input type="checkbox" name="selected-apps" value="Maxim" checked class="absolute top-2 right-2 accent-indigo-600" onchange="updateAppOpacity()">
-                        <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center font-bold text-lg mb-2">M</div>
-                        <span class="font-semibold text-sm">Maxim</span>
-                    </label>
-                    <label class="app-card-label border border-indigo-500 bg-indigo-50/20 rounded-xl p-3 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition relative">
-                        <input type="checkbox" name="selected-apps" value="InDrive" checked class="absolute top-2 right-2 accent-indigo-600" onchange="updateAppOpacity()">
-                        <div class="w-10 h-10 bg-cyan-100 text-cyan-600 rounded-full flex items-center justify-center font-bold text-lg mb-2">ID</div>
-                        <span class="font-semibold text-sm">InDrive</span>
-                    </label>
-                </div>
-            </div>
+// คำนวณโหมดเรียกรถ
+function calculateRide() {
+    const dist = parseFloat(document.getElementById('distance').value);
+    const toll = parseFloat(document.getElementById('toll-fee').value) || 0;
+    const serviceKey = document.getElementById('service-type').value;
+    const travelTimeMin = Math.round(dist * 1.5);
 
-            <!-- Route & Map Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-800 mb-4">2. กำหนดจุดเริ่มต้นและจุดหมายปลายทาง</h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">จุดเริ่มต้น (Origin)</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-emerald-600"><i class="fa-solid fa-location-dot"></i></span>
-                                    <input type="text" id="origin-input" placeholder="พิมพ์ชื่อสถานที่..." class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">จุดหมายปลายทาง (Destination)</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-rose-600"><i class="fa-solid fa-map-pin"></i></span>
-                                    <input type="text" id="dest-input" placeholder="พิมพ์ชื่อสถานที่ปลายทาง..." class="w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">ประเภทรถรับจ้าง</label>
-                                <select id="ride-type" class="w-full p-2.5 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                                    <option value="car">รถยนต์ส่วนบุคคล (Eco/Sedan)</option>
-                                    <option value="suv">รถยนต์ขนาดใหญ่ (SUV/Van)</option>
-                                    <option value="bike">มอเตอร์ไซค์รับจ้าง (Bike)</option>
-                                    <option value="comfort">รถพรีเมียม (Comfort)</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <button onclick="calculateMode1()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-calculator"></i>
-                            <span>คำนวณและเปรียบเทียบราคา</span>
-                        </button>
-                    </div>
-                </div>
+    updateMap('ride');
 
-                <div class="lg:col-span-2 bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                    <h3 class="text-sm font-bold text-slate-700 mb-2 flex items-center space-x-2">
-                        <i class="fa-solid fa-map text-indigo-600"></i>
-                        <span>แผนที่แสดงเส้นทางและสภาพการจราจรแบบเรียลไทม์</span>
-                    </h3>
-                    <div class="flex-1 rounded-xl overflow-hidden shadow-inner border border-slate-100 min-h-[350px]">
-                        <div id="map"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Inline Results Container Mode 1 -->
-            <div id="mode1-results-container" class="hidden bg-white p-6 rounded-2xl shadow-md border border-indigo-100 transition-all duration-300">
-                <div class="border-b border-slate-200 pb-4 mb-4 flex justify-between items-center">
-                    <div>
-                        <h3 class="text-xl font-bold text-slate-900">ผลการเปรียบเทียบราคาค่าเรียกรถ</h3>
-                        <p class="text-xs text-slate-500 mt-1">ระยะทางโดยประมาณ: <span id="m1-distance" class="font-semibold text-indigo-600">-</span> กม. | เวลาเดินทาง: <span id="m1-duration" class="font-semibold text-indigo-600">-</span> นาที</p>
-                    </div>
-                    <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">คำนวณสำเร็จ</span>
-                </div>
-                
-                <div id="m1-cards-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6"></div>
-
-                <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-4 border-t border-slate-100">
-                    <button onclick="proceedService()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>ต้องการใช้บริการต่อ</span>
-                    </button>
-                    <button onclick="finishComparison()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>เสร็จสิ้นการเปรียบเทียบ</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- STEP 2: MODE 2 PRIVATE CAR & FUEL/EV SCREEN -->
-        <section id="step2-mode2-screen" class="hidden flex-1 flex flex-col space-y-6">
-            <div class="flex items-center justify-between">
-                <button onclick="goBackToStep1()" class="text-slate-600 hover:text-emerald-600 font-medium flex items-center space-x-2 text-sm">
-                    <i class="fa-solid fa-arrow-left"></i>
-                    <span>ย้อนกลับหน้าหลัก</span>
-                </button>
-                <h2 class="text-xl md:text-2xl font-black text-emerald-700 tracking-tight">โหมดที่ 2: เปรียบเทียบต้นทุนรถส่วนตัว & เชื้อเพลิง/EV</h2>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Left: Calculation Form -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                    <div>
-                        <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
-                            <i class="fa-solid fa-sliders text-emerald-600"></i>
-                            <span>ตั้งค่าพาหนะและข้อมูลการเดินทาง</span>
-                        </h3>
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">จุดเริ่มต้น (Origin)</label>
-                                <input type="text" id="m2-origin" placeholder="ระบุจุดเริ่มต้น..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">จุดหมายปลายทาง (Destination)</label>
-                                <input type="text" id="m2-dest" placeholder="ระบุจุดหมายปลายทาง..." class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ประเภทพาหนะ</label>
-                                    <select id="vehicle-type" onchange="toggleVehicleOptions()" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                        <option value="car">รถยนต์ส่วนบุคคล</option>
-                                        <option value="suv">รถยนต์ SUV / PPV</option>
-                                        <option value="bike">มอเตอร์ไซค์</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1" id="fuel-type-label">ประเภทเชื้อเพลิง</label>
-                                    <select id="fuel-type" class="w-full p-2 border border-slate-300 rounded-xl text-sm bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                        <option value="gas95">เบนซิน 95 / แก๊สโซฮอล์ 95</option>
-                                        <option value="gas91">แก๊สโซฮอล์ 91</option>
-                                        <option value="e20">แก๊สโซฮอล์ E20</option>
-                                        <option value="diesel">ดีเซล B7/B20</option>
-                                        <option value="lpg">ก๊าซ LPG</option>
-                                        <option value="ngv">ก๊าซ NGV</option>
-                                        <option value="ev">รถยนต์ไฟฟ้า EV</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">อัตราสิ้นเปลือง (<span id="unit-label">กม./ลิตร</span>)</label>
-                                    <input type="number" id="fuel-efficiency" value="15" step="0.5" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ราคาพลังงานปัจจุบัน (บาท/หน่วย)</label>
-                                    <input type="number" id="fuel-price" value="38.50" step="0.25" class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mt-6">
-                        <button onclick="calculateMode2()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold shadow-md transition flex items-center justify-center space-x-2">
-                            <i class="fa-solid fa-chart-line"></i>
-                            <span>คำนวณต้นทุนและวิเคราะห์โดย Gemini AI</span>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Right: Google Maps Display Mode 2 -->
-                <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col">
-                    <h3 class="text-sm font-bold text-slate-700 mb-2 flex items-center space-x-2">
-                        <i class="fa-solid fa-map text-emerald-600"></i>
-                        <span>แผนที่แสดงเส้นทางโหมดรถส่วนตัว</span>
-                    </h3>
-                    <div class="flex-1 rounded-xl overflow-hidden shadow-inner border border-slate-100 min-h-[350px]">
-                        <div id="map-mode2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Gemini AI Analysis Box -->
-            <div class="bg-slate-900 text-white p-6 rounded-2xl shadow-xl flex flex-col justify-between border border-slate-800">
-                <div>
-                    <div class="flex items-center space-x-2 mb-4">
-                        <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-                            <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        </div>
-                        <h3 class="text-base font-bold text-emerald-400">กล่องวิเคราะห์และเสนอแนะโดย Gemini AI</h3>
-                    </div>
-                    <div id="ai-analysis-content" class="text-slate-300 text-sm space-y-3 leading-relaxed">
-                        <p class="italic text-slate-400">กรุณากรอกข้อมูลและกดปุ่ม "คำนวณต้นทุนและวิเคราะห์โดย Gemini AI" เพื่อประมวลผลเส้นทางและจุดคุ้มทุน...</p>
-                    </div>
-                </div>
-                <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-                    <span>ขับเคลื่อนด้วย Gemini API</span>
-                    <span id="ai-status" class="text-emerald-400 font-medium">พร้อมใช้งาน</span>
-                </div>
-            </div>
-
-            <!-- Inline Results Mode 2 with Break-Even Table -->
-            <div id="mode2-results-container" class="hidden bg-white p-6 rounded-2xl shadow-md border border-emerald-100 transition-all duration-300">
-                <h3 class="text-lg font-bold text-slate-900 mb-4">ผลการวิเคราะห์และตารางเปรียบเทียบจุดคุ้มทุน</h3>
-                
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <span class="text-xs text-slate-500 font-medium">ระยะทางรวม</span>
-                        <p class="text-2xl font-bold text-slate-800 mt-1"><span id="m2-res-dist">0</span> <span class="text-sm font-normal">กม.</span></p>
-                    </div>
-                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                        <span class="text-xs text-slate-500 font-medium">ปริมาณพลังงานที่ใช้</span>
-                        <p class="text-2xl font-bold text-slate-800 mt-1"><span id="m2-res-fuel-qty">0</span> <span class="text-sm font-normal" id="m2-unit-txt">ลิตร</span></p>
-                    </div>
-                    <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-200">
-                        <span class="text-xs text-emerald-700 font-medium">ต้นทุนค่าพลังงานรวม</span>
-                        <p class="text-2xl font-extrabold text-emerald-600 mt-1"><span id="m2-res-cost">0</span> <span class="text-sm font-normal">บาท</span></p>
-                    </div>
-                </div>
-
-                <!-- Break-Even / Fuel Comparison Table -->
-                <div class="mt-6 overflow-x-auto">
-                    <h4 class="text-sm font-bold text-slate-800 mb-3 flex items-center">
-                        <i class="fa-solid fa-table-cells text-emerald-600 mr-2"></i> ตารางเปรียบเทียบต้นทุนพลังงานทุกประเภท & จุดคุ้มทุน (Break-Even)
-                    </h4>
-                    <table class="w-full text-xs text-left text-slate-600 border border-slate-200 rounded-xl overflow-hidden">
-                        <thead class="bg-slate-100 text-slate-700 font-bold uppercase">
-                            <tr>
-                                <th class="p-3 border-b">ประเภทเชื้อเพลิง</th>
-                                <th class="p-3 border-b">ราคา/หน่วย</th>
-                                <th class="p-3 border-b">ต้นทุน/กม. (บาท)</th>
-                                <th class="p-3 border-b">ค่าเดินทางรวม (บาท)</th>
-                                <th class="p-3 border-b">ส่วนต่างเทียบกับ EV (บาท)</th>
-                            </tr>
-                        </thead>
-                        <tbody id="m2-compare-table-body" class="divide-y divide-slate-200"></tbody>
-                    </table>
-                </div>
-
-                <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3 pt-6 mt-6 border-t border-slate-100">
-                    <button onclick="proceedService()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-semibold text-sm shadow transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-check-circle"></i>
-                        <span>ต้องการใช้บริการต่อ</span>
-                    </button>
-                    <button onclick="finishComparison()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 px-6 py-2.5 rounded-xl font-semibold text-sm transition flex items-center justify-center space-x-2">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                        <span>เสร็จสิ้นการเปรียบเทียบ</span>
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- TRUST BADGE -->
-        <section class="mt-8 bg-indigo-50/60 border border-indigo-100 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between text-xs text-slate-600">
-            <div class="flex items-center space-x-3 mb-2 sm:mb-0">
-                <i class="fa-solid fa-shield-halved text-indigo-600 text-xl"></i>
-                <div>
-                    <p class="font-bold text-slate-800">ยืนยันความสมบูรณ์และแหล่งที่มาของข้อมูล</p>
-                    <p>ข้อมูลราคาค่าบริการและราคาน้ำมันอ้างอิงจากกระทรวงพลังงานและ API ผู้ให้บริการอย่างเป็นทางการ</p>
-                </div>
-            </div>
-            <span class="bg-white px-3 py-1 rounded-full border border-indigo-200 text-indigo-700 font-semibold shadow-xs">ความน่าเชื่อถือ 99.8%</span>
-        </section>
-
-        <!-- FEEDBACK SECTION -->
-        <section class="mt-6 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-            <h3 class="text-sm font-bold text-slate-800 mb-2 flex items-center space-x-2">
-                <i class="fa-solid fa-comments text-indigo-600"></i>
-                <span>ระบบติชมและแสดงความคิดเห็นแบบเรียลไทม์</span>
-            </h3>
-            <p class="text-xs text-slate-500 mb-3">ความคิดเห็นของคุณช่วยให้เราพัฒนาระบบคำนวณและคำแนะนำให้ดียิ่งขึ้น</p>
-            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                <input type="text" id="feedback-input" placeholder="พิมพ์ข้อเสนอแนะหรือแจ้งปัญหาการใช้งาน..." class="flex-1 px-4 py-2 border border-slate-300 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
-                <button onclick="submitFeedback()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-xl text-sm font-semibold shadow transition">ส่งความคิดเห็น</button>
-            </div>
-            <div id="feedback-success" class="hidden text-xs text-emerald-600 mt-2 font-medium">ขอบคุณสำหรับความคิดเห็นของคุณ ระบบได้บันทึกเรียบร้อยแล้ว</div>
-        </section>
-
-    </main>
-
-    <script>
-        let map, mapMode2, directionsService, directionsRenderer, directionsRendererMode2;
-        let currentMode = 1;
-
-        window.initMap = function() {
-            const bangkok = { lat: 13.7563, lng: 100.5018 };
-            
-            // Map Mode 1
-            map = new google.maps.Map(document.getElementById("map"), {
-                zoom: 13, center: bangkok, mapTypeControl: false, streetViewControl: false
-            });
-            directionsService = new google.maps.DirectionsService();
-            directionsRenderer = new google.maps.DirectionsRenderer();
-            directionsRenderer.setMap(map);
-
-            // Map Mode 2
-            mapMode2 = new google.maps.Map(document.getElementById("map-mode2"), {
-                zoom: 13, center: bangkok, mapTypeControl: false, streetViewControl: false
-            });
-            directionsRendererMode2 = new google.maps.DirectionsRenderer();
-            directionsRendererMode2.setMap(mapMode2);
-
-            // Autocomplete
-            if (google.maps.places) {
-                new google.maps.places.Autocomplete(document.getElementById("origin-input"));
-                new google.maps.places.Autocomplete(document.getElementById("dest-input"));
-                new google.maps.places.Autocomplete(document.getElementById("m2-origin"));
-                new google.maps.places.Autocomplete(document.getElementById("m2-dest"));
-            }
+    const services = APP_DATA[serviceKey];
+    const results = services.map(s => {
+        let price;
+        if (s.baseFare === 0) {
+            price = (dist * s.perKm) * s.surge;
+        } else {
+            price = (s.baseFare + dist * s.perKm + travelTimeMin * s.perMin + s.fee) * s.surge;
         }
+        price += toll;
+        return { ...s, total: Math.round(price) };
+    });
 
-        function selectMode(mode) {
-            currentMode = mode;
-            document.getElementById("step1-screen").classList.add("hidden");
-            if (mode === 1) {
-                document.getElementById("step2-mode1-screen").classList.remove("hidden");
-                document.getElementById("step2-mode2-screen").classList.add("hidden");
-                setTimeout(() => { if (map) google.maps.event.trigger(map, 'resize'); }, 300);
-            } else {
-                document.getElementById("step2-mode1-screen").classList.add("hidden");
-                document.getElementById("step2-mode2-screen").classList.remove("hidden");
-                setTimeout(() => { if (mapMode2) google.maps.event.trigger(mapMode2, 'resize'); }, 300);
-            }
-        }
+    results.sort((a, b) => a.total - b.total);
+    const lowestPrice = results[0].total;
 
-        function goBackToStep1() {
-            document.getElementById("step1-screen").classList.remove("hidden");
-            document.getElementById("step2-mode1-screen").classList.add("hidden");
-            document.getElementById("step2-mode2-screen").classList.add("hidden");
-            document.getElementById("mode1-results-container").classList.add("hidden");
-            document.getElementById("mode2-results-container").classList.add("hidden");
-        }
+    document.getElementById('route-summary').textContent = `${dist.toFixed(1)} กม. · ประมาณ ${travelTimeMin} นาที`;
 
-        function updateAppOpacity() {
-            const checkboxes = document.querySelectorAll('input[name="selected-apps"]');
-            checkboxes.forEach(cb => {
-                const card = cb.closest('.app-card-label');
-                if (cb.checked) {
-                    card.classList.remove('opacity-40', 'grayscale');
-                    card.classList.add('border-indigo-500', 'bg-indigo-50/20');
-                } else {
-                    card.classList.add('opacity-40', 'grayscale');
-                    card.classList.remove('border-indigo-500', 'bg-indigo-50/20');
-                }
-            });
-        }
+    const container = document.getElementById('price-list');
+    container.innerHTML = results.map(r => {
+        const isBest = r.total === lowestPrice;
+        return `
+        <div class="price-card ${isBest ? 'best-value' : ''}">
+            <div class="app-logo ${r.app.toLowerCase()}">${r.app.substring(0,4)}</div>
+            <div class="price-details">
+                <div class="service-name">${r.service}${isBest ? '<span class="best-badge">ถูกสุด ✅</span>' : ''}</div>
+                <div class="service-desc">${r.desc}${r.note ? ' · ' + r.note : ''}</div>
+            </div>
+            <div class="price-value">฿${r.total}</div>
+        </div>`;
+    }).join('');
 
-        function toggleVehicleOptions() {
-            const vType = document.getElementById("vehicle-type").value;
-            const fuelSelect = document.getElementById("fuel-type");
-            const unitLbl = document.getElementById("unit-label");
-            fuelSelect.innerHTML = "";
-            if (vType === 'bike') {
-                unitLbl.innerText = "กม./ลิตร";
-                fuelSelect.innerHTML = `
-                    <option value="gas95">แก๊สโซฮอล์ 95</option>
-                    <option value="gas91">แก๊สโซฮอล์ 91</option>
-                `;
-                document.getElementById("fuel-efficiency").value = 45;
-                document.getElementById("fuel-price").value = 38.50;
-            } else {
-                unitLbl.innerText = "กม./ลิตร";
-                fuelSelect.innerHTML = `
-                    <option value="gas95">เบนซิน 95 / แก๊สโซฮอล์ 95</option>
-                    <option value="gas91">แก๊สโซฮอล์ 91</option>
-                    <option value="e20">แก๊สโซฮอล์ E20</option>
-                    <option value="diesel">ดีเซล B7/B20</option>
-                    <option value="lpg">ก๊าซ LPG</option>
-                    <option value="ngv">ก๊าซ NGV</option>
-                    <option value="ev">รถยนต์ไฟฟ้า EV</option>
-                `;
-                document.getElementById("fuel-efficiency").value = 15;
-                document.getElementById("fuel-price").value = 38.50;
-            }
-        }
+    const avgSelfCost = dist * 5.0 + toll;
+    const saving = lowestPrice > avgSelfCost ? lowestPrice - avgSelfCost : avgSelfCost - lowestPrice;
+    const savingText = lowestPrice <= avgSelfCost 
+        ? `เรียกรถประหยัดกว่า ฿${Math.round(saving)}`
+        : `ขับเองประหยัดกว่า ฿${Math.round(saving)}`;
+    
+    document.getElementById('self-estimate').textContent = `฿${Math.round(avgSelfCost)}`;
+    document.getElementById('savings').textContent = savingText;
 
-        function calculateMode1() {
-            const origin = document.getElementById("origin-input").value;
-            const dest = document.getElementById("dest-input").value;
-            if (!origin || !dest) {
-                alert("กรุณากรอกจุดเริ่มต้นและจุดหมายปลายทาง");
-                return;
-            }
+    document.getElementById('ride-results').classList.remove('hidden');
+}
 
-            directionsService.route({
-                origin: origin, destination: dest, travelMode: 'DRIVING'
-            }, (result, status) => {
-                if (status === 'OK') {
-                    directionsRenderer.setDirections(result);
-                    const route = result.routes[0].legs[0];
-                    const distKm = (route.distance.value / 1000).toFixed(1);
-                    const durationMin = Math.round(route.duration.value / 60);
+// คำนวณโหมดขับขี่เอง
+function calculateOwn() {
+    const efficiency = parseFloat(document.getElementById('car-type').value);
+    const rate = parseFloat(document.getElementById('fuel-rate').value);
+    const dist = parseFloat(document.getElementById('own-distance').value);
+    const toll = parseFloat(document.getElementById('own-toll').value) || 0;
+    
+    const isEV = document.getElementById('car-type').selectedOptions[0].hasAttribute('data-ev');
+    const fuelUsed = dist / efficiency;
+    const fuelCost = fuelUsed * rate;
+    const total = fuelCost + toll;
 
-                    document.getElementById("m1-distance").innerText = distKm;
-                    document.getElementById("m1-duration").innerText = durationMin;
+    updateMap('own');
 
-                    renderMode1Cards(distKm);
-                    document.getElementById("mode1-results-container").classList.remove("hidden");
-                } else {
-                    alert("ไม่สามารถค้นหาเส้นทางได้ กรุณาตรวจสอบสถานที่อีกครั้ง");
-                }
-            });
-        }
+    document.getElementById('o-dist').textContent = `${dist.toFixed(1)} กม.`;
+    document.getElementById('o-fuel').textContent = `${fuelUsed.toFixed(2)} ${isEV ? 'หน่วย kWh' : 'ลิตร'}`;
+    document.getElementById('o-fcost').textContent = `฿${fuelCost.toFixed(2)}`;
+    document.getElementById('o-toll').textContent = `฿${toll.toFixed(2)}`;
+    document.getElementById('o-total').textContent = `฿${Math.round(total)}`;
 
-        function renderMode1Cards(dist) {
-            const container = document.getElementById("m1-cards-list");
-            container.innerHTML = "";
-            const selectedApps = Array.from(document.querySelectorAll('input[name="selected-apps"]:checked')).map(cb => cb.value);
+    document.getElementById('own-results').classList.remove('hidden');
+}
 
-            const appRates = {
-                'Grab': { base: 45, perKm: 8, color: 'emerald' },
-                'Bolt': { base: 35, perKm: 6.5, color: 'teal' },
-                'Lineman': { base: 40, perKm: 7.5, color: 'green' },
-                'Maxim': { base: 30, perKm: 6, color: 'amber' },
-                'InDrive': { base: 32, perKm: 6.2, color: 'cyan' }
+window.onload = () => {
+    updateMap('ride');
+};
+</script>
+
+</body>
+</html>
