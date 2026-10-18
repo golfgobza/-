@@ -42,7 +42,7 @@
 <div class="error-box" id="errorBox"></div>
 
 <div class="input-group">
-    <label>📍 จุดรับ — คลิกแผนที่ หรือ พิมพ์ที่อยู่</label>
+    <label>🟢 จุดรับ — คลิกแผนที่ หรือ พิมพ์ที่อยู่</label>
     <div class="input-row">
         <input type="text" id="origin" placeholder="พิมพ์ที่อยู่ หรือ คลิกเลือกบนแผนที่">
         <button class="loc-btn" onclick="useCurrentLocation('origin')" title="ใช้ตำแหน่งปัจจุบัน">📍</button>
@@ -51,7 +51,7 @@
 </div>
 
 <div class="input-group">
-    <label>📍 จุดส่ง — คลิกแผนที่ หรือ พิมพ์ที่อยู่</label>
+    <label>🔴 จุดส่ง — คลิกแผนที่ หรือ พิมพ์ที่อยู่</label>
     <div class="input-row">
         <input type="text" id="destination" placeholder="พิมพ์ที่อยู่ หรือ คลิกเลือกบนแผนที่">
         <button class="loc-btn" onclick="useCurrentLocation('destination')" title="ใช้ตำแหน่งปัจจุบัน">📍</button>
@@ -83,9 +83,15 @@
 
 <script>
 const API_KEY = "AIzaSyAWxrmqcWiMppxhmHYWd1yNqMMi6BzfHMg";
-let map, originMarker = null, destMarker = null, directionsRenderer = null;
-let pickMode = null, originCoords = null, destCoords = null;
-let currentRouteData = null, tollAmount = 0;
+let map;
+let originMarker = null;
+let destMarker = null;
+let directionsRenderer = null;
+let pickMode = null;
+let originCoords = null;
+let destCoords = null;
+let currentRouteData = null;
+let tollAmount = 0;
 
 function showLoading(show) {
     document.getElementById('loading').style.display = show ? 'block' : 'none';
@@ -106,73 +112,106 @@ function initMap() {
         streetViewControl: false
     });
     directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
-    map.addListener('click', e => { 
-        if(pickMode) { 
-            placeMarker(e.latLng, pickMode); 
-            pickMode = null; 
-        }
+    
+    // คลิกแผนที่วางหมุด
+    map.addListener('click', function(e) { 
+        if(!pickMode) return;
+        placeMarker(e.latLng, pickMode); 
+        pickMode = null; 
     });
-    document.getElementById('origin').addEventListener('focus', () => pickMode = 'origin');
-    document.getElementById('destination').addEventListener('focus', () => pickMode = 'destination');
+    
+    // คลิกที่ช่องจุดรับ/ส่ง → เปิดโหมดเลือก
+    document.getElementById('origin').addEventListener('focus', function() {
+        pickMode = 'origin';
+    });
+    document.getElementById('destination').addEventListener('focus', function() {
+        pickMode = 'destination';
+    });
 }
 
+// วางหมุด — ทำงานเหมือนกันทั้งจุดรับและจุดส่ง
 function placeMarker(latLng, type) {
+    console.log('วางหมุด:', type, latLng.lat(), latLng.lng());
+    
     if(type === 'origin') {
+        // ลบหมุดเก่า
         if(originMarker) originMarker.setMap(null);
+        // สร้างหมุดใหม่
         originMarker = new google.maps.Marker({ 
             position: latLng, 
             map: map, 
+            title: 'จุดรับ',
             icon: 'https://maps.google.com/mapfiles/ms/icons/green-dot.png' 
         });
+        // บันทึกพิกัด
         originCoords = { lat: latLng.lat(), lng: latLng.lng() };
+        // แปลงพิกัดเป็นที่อยู่
         reverseGeocode(latLng, 'origin');
-        document.getElementById('originCoords').textContent = `พิกัด: ${originCoords.lat.toFixed(6)}, ${originCoords.lng.toFixed(6)}`;
+        // แสดงพิกัดใต้ช่อง
+        document.getElementById('originCoords').textContent = 
+            `พิกัด: ${originCoords.lat.toFixed(6)}, ${originCoords.lng.toFixed(6)}`;
     } else {
+        // ลบหมุดเก่า
         if(destMarker) destMarker.setMap(null);
+        // สร้างหมุดใหม่
         destMarker = new google.maps.Marker({ 
             position: latLng, 
             map: map, 
+            title: 'จุดส่ง',
             icon: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' 
         });
+        // บันทึกพิกัด
         destCoords = { lat: latLng.lat(), lng: latLng.lng() };
+        // แปลงพิกัดเป็นที่อยู่
         reverseGeocode(latLng, 'destination');
-        document.getElementById('destCoords').textContent = `พิกัด: ${destCoords.lat.toFixed(6)}, ${destCoords.lng.toFixed(6)}`;
+        // แสดงพิกัดใต้ช่อง
+        document.getElementById('destCoords').textContent = 
+            `พิกัด: ${destCoords.lat.toFixed(6)}, ${destCoords.lng.toFixed(6)}`;
     }
 }
 
+// ใช้ตำแหน่งปัจจุบัน
 function useCurrentLocation(type) {
-    if(!navigator.geolocation) return alert('เบราว์เซอร์ไม่รองรับตำแหน่ง');
+    if(!navigator.geolocation) {
+        return alert('เบราว์เซอร์ไม่รองรับตำแหน่ง');
+    }
     navigator.geolocation.getCurrentPosition(
-        pos => { 
+        function(pos) { 
             const p = new google.maps.LatLng(pos.coords.latitude, pos.coords.longitude); 
             placeMarker(p, type); 
             map.panTo(p); 
             map.setZoom(15); 
         },
-        err => alert('หาตำแหน่งไม่ได้: ' + err.message)
+        function(err) {
+            alert('หาตำแหน่งไม่ได้: ' + err.message);
+        }
     );
 }
 
+// แปลงพิกัด → ที่อยู่
 function reverseGeocode(latLng, type) {
-    new google.maps.Geocoder().geocode(
+    const geocoder = new google.maps.Geocoder();
+    geocoder.geocode(
         { location: latLng, language: 'th' }, 
-        (r, s) => {
-            if(s === 'OK' && r && r[0]) {
-                document.getElementById(type).value = r[0].formatted_address;
+        function(results, status) {
+            if(status === 'OK' && results && results[0]) {
+                document.getElementById(type).value = results[0].formatted_address;
             }
         }
     );
 }
 
+// แปลงที่อยู่ → พิกัด
 async function geocodeAddress(addr) {
-    return new Promise((resolve, reject) => {
-        new google.maps.Geocoder().geocode(
+    return new Promise(function(resolve, reject) {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode(
             { address: addr + ', ประเทศไทย', language: 'th', region: 'th' },
-            (r, s) => {
-                if(s === 'OK' && r && r[0]) {
-                    resolve(r[0].geometry.location);
+            function(results, status) {
+                if(status === 'OK' && results && results[0]) {
+                    resolve(results[0].geometry.location);
                 } else {
-                    reject(`ไม่พบที่อยู่ (${s}) — ลองพิมพ์ชื่ออำเภอ/จังหวัดด้วย`);
+                    reject(`ไม่พบที่อยู่ (${status}) — ลองพิมพ์ชื่ออำเภอ/จังหวัดด้วย`);
                 }
             }
         );
@@ -193,7 +232,7 @@ async function calculateRoute() {
     }
 
     try {
-        // 1. แปลงที่อยู่เป็นพิกัด
+        // แปลงที่อยู่เป็นพิกัด ถ้ายังไม่มีหมุด
         if(!originCoords) {
             const oLatLng = await geocodeAddress(oText);
             placeMarker(oLatLng, 'origin');
@@ -203,15 +242,21 @@ async function calculateRoute() {
             placeMarker(dLatLng, 'destination');
         }
 
-        // 2. ใช้ Directions API คำนวณเส้นทางก่อน (เชื่อถือได้กว่าในบางกรณี)
-        const dirResult = await new Promise((resolve, reject) => {
-            new google.maps.DirectionsService().route({
+        // ตรวจสอบพิกัดอีกครั้ง
+        if(!originCoords || !destCoords) {
+            throw new Error('ไม่สามารถหาพิกัดจุดรับหรือจุดส่งได้');
+        }
+
+        // คำนวณเส้นทางด้วย Directions API
+        const dirResult = await new Promise(function(resolve, reject) {
+            const service = new google.maps.DirectionsService();
+            service.route({
                 origin: new google.maps.LatLng(originCoords.lat, originCoords.lng),
                 destination: new google.maps.LatLng(destCoords.lat, destCoords.lng),
                 travelMode: 'DRIVE'
-            }, (res, s) => {
-                if(s === 'OK') resolve(res);
-                else reject(`หาเส้นทางไม่ได้: ${s}`);
+            }, function(res, status) {
+                if(status === 'OK') resolve(res);
+                else reject(`หาเส้นทางไม่ได้: ${status}`);
             });
         });
 
@@ -222,7 +267,8 @@ async function calculateRoute() {
             durationMin: Math.ceil(leg.duration.value / 60)
         };
 
-        // 3. เรียก Routes API เพื่อเช็คค่าผ่านทาง
+        // เรียก Routes API เพื่อเช็คค่าผ่านทาง
+        tollAmount = 0;
         try {
             const res = await fetch("https://routes.googleapis.com/directions/v2:computeRoutes", {
                 method: "POST",
@@ -246,8 +292,7 @@ async function calculateRoute() {
             });
 
             const data = await res.json();
-            
-            if(res.ok && data.routes?.length > 0) {
+            if(res.ok && data.routes && data.routes.length > 0) {
                 const route = data.routes[0];
                 if(route.travelAdvisory?.tollInfo?.tollSections?.length > 0) {
                     const sec = route.travelAdvisory.tollInfo.tollSections.length;
@@ -256,18 +301,14 @@ async function calculateRoute() {
                         `จำนวนด่าน: <strong>${sec} ด่าน</strong><br>ค่าผ่านทางประมาณ: <strong>${tollAmount} บาท</strong>`;
                     document.getElementById('tollBox').style.display = 'block';
                     showLoading(false);
-                    return; // รอการยืนยัน
+                    return;
                 }
             }
-            // ถ้าไม่มีค่าผ่านทาง หรือเรียก Routes ไม่ได้ → แสดงผลเลย
-            tollAmount = 0;
-            document.getElementById('tollBox').style.display = 'none';
-            
         } catch(e) {
-            console.warn('เช็คค่าผ่านทางไม่ได้ แสดงผลโดยไม่รวมค่าผ่านทาง:', e.message);
-            tollAmount = 0;
+            console.warn('เช็คค่าผ่านทางไม่ได้:', e.message);
         }
 
+        document.getElementById('tollBox').style.display = 'none';
         displayResults();
 
     } catch(e) {
@@ -292,8 +333,8 @@ async function confirmToll(wantToll) {
             destination: new google.maps.LatLng(destCoords.lat, destCoords.lng),
             travelMode: 'DRIVE',
             avoidTolls: true
-        }, (res, s) => {
-            if(s === 'OK') {
+        }, function(res, status) {
+            if(status === 'OK') {
                 directionsRenderer.setDirections(res);
                 const leg = res.routes[0].legs[0];
                 currentRouteData.distanceKm = (leg.distance.value / 1000).toFixed(1);
